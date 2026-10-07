@@ -10,7 +10,7 @@ Only mark an item complete after its stated behavior is observed. Edward authori
 - [x] Pass the basic offer-and-acceptance test.
 - [x] Create the initial GenderMag review and three-slide PDF.
 
-## Remaining work, in order
+## Completed verification, in order
 
 - [x] **1. Cancellation:** Try next skips the cancelled person. Close opening stops further offers.
 - [x] **2. Late replies:** Expired or taken offers give a clear response and cannot reserve the slot.
@@ -20,7 +20,7 @@ Only mark an item complete after its stated behavior is observed. Edward authori
 - [x] **6. Questions:** An unclear reply flags staff follow-up without reserving the appointment.
 - [x] **7. Recovery:** Restarting the worker preserves the pending offer and its original deadline.
 - [x] **8. Browser walkthrough:** Exercise the visible controls in a real browser and check desktop/mobile layouts. Record assistant testing separately from Edward's own review.
-- [ ] **9. Final submission:** Update the slides and instructions to match verified behavior, then push the final changes.
+- [x] **9. Repository deliverables:** Update the slides and instructions to match verified behavior, then push the final changes.
 
 ## Evidence for item 1
 
@@ -64,3 +64,13 @@ The existing local session was also preserved during the code upgrade: saved his
 This is assistant-run browser verification. It is not a claim that Edward or Lena personally tested or signed off on the final build.
 
 Local raw logs and screenshots are in ignored `.local/`; the reproducible test sources are included in the repository.
+
+## Evidence for item 9
+
+- README now includes native/Docker startup, automated and browser checks, a manual walkthrough, meaningful Temporal usage, and the exact prototype limits.
+- The PDF contains four standalone 16:9 slides: customer problem, prototype behavior, checked behavior and exclusions, and a practical next step. All four pages were rendered and visually inspected. PDF metadata confirms four pages; Git stores the PDF without text conversion.
+- The GenderMag-informed review records the final feedback, discoverability and keyboard-focus changes. It does not claim an empirical user study.
+- Type checking passed. The final repeat of `npm test` passed all 14 tests with zero failures.
+- Commit `15cdf21` with the prototype, tests, documentation and PDF was pushed successfully to `origin/main` on October 7, 2026. GitHub confirms `edCitalan/temporal-waitlist-assessment` is public and is not a fork.
+
+Repository preparation is complete. This checklist does not claim that Edward has delivered the presentation or submitted the repository link through the assessment portal.
