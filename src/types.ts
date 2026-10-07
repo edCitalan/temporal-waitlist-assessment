@@ -23,6 +23,11 @@ export type OpeningInput = {
   startsAt: string;
   displayTime: string;
   durationMinutes: number;
+  /** Staff's last practical response time; defaults to appointment start. */
+  offerUntil?: string;
+  timeZone?: string;
+  localDay?: number;
+  localHour?: number;
 };
 
 export type Opening = OpeningInput & {
@@ -45,6 +50,7 @@ export type Offer = {
   deadlineAt: string;
   status: "waiting" | "needs-follow-up" | "accepted" | "declined" | "expired" | "cancelled";
   message: string;
+  lastReply?: ReplyResult;
 };
 
 export type SalonSnapshot = {
@@ -61,9 +67,16 @@ export type ClientReply = {
   message?: string;
 };
 
+export type ReplyResult = {
+  code: "accepted" | "declined" | "follow-up" | "expired" | "taken" | "unavailable" | "not-found";
+  message: string;
+};
+
 export type StaffCancellation = {
   openingId: string;
   stillOpen: boolean;
   reason: string;
+  /** Prevent a retried cancellation from cancelling the next client's offer. */
+  offerId?: string;
 };
 

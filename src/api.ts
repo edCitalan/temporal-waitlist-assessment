@@ -10,13 +10,14 @@ import type {
   OpeningInput,
   StaffCancellation,
 } from "./types";
-import { juniperSalonWorkflow, salonTaskQueue } from "./workflows";
+import { juniperSalonWorkflow, respondToOffer, salonTaskQueue } from "./workflows";
+import { normalizeOpening } from "./opening-input";
 
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(process.cwd(), "public")));
 
-const workflowId = "juniper-salon-waitlist";
+const workflowId = process.env.SALON_WORKFLOW_ID ?? "juniper-salon-waitlist";
 let clientPromise: Promise<Client> | undefined;
 function getClient(): Promise<Client> {
   clientPromise ??= Connection.connect({
@@ -51,18 +52,10 @@ app.get("/api/salon", async (_request, response) => {
 });
 
 app.post("/api/openings", async (request, response) => {
-  const input = request.body as OpeningInput;
-  if (
-    !input ||
-    !["Haircut", "Color", "Highlights"].includes(input.service) ||
-    !input.stylist ||
-    !input.startsAt ||
-    !Number.isFinite(Date.parse(input.startsAt)) ||
-    !input.displayTime ||
-    !Number.isFinite(input.durationMinutes) ||
-    input.durationMinutes < 15
-  ) {
-    response.status(400).json({ error: "Add a service, stylist, date, and duration." });
+  let input: OpeningInput;
+  try { input = normalizeOpening(request.body); }
+  catch (error) {
+    response.status(400).json({ error: (error as Error).message });
     return;
   }
   const handle = await getSalonHandle();
@@ -88,8 +81,8 @@ app.post("/api/offers/:offerId/reply", async (request, response) => {
     message: typeof request.body?.message === "string" ? request.body.message : undefined,
   };
   const handle = await getSalonHandle();
-  await handle.signal("replyToOffer", reply);
-  response.status(202).json({ received: true });
+  const result = await handle.executeUpdate(respondToOffer, { args: [reply] });
+  response.json(result);
 });
 
 app.post("/api/openings/:openingId/cancel", async (request, response) => {
@@ -97,6 +90,7 @@ app.post("/api/openings/:openingId/cancel", async (request, response) => {
     openingId: request.params.openingId,
     stillOpen: request.body?.stillOpen === true,
     reason: typeof request.body?.reason === "string" ? request.body.reason : "Staff cancelled the offer",
+    offerId: typeof request.body?.offerId === "string" ? request.body.offerId : undefined,
   };
   const handle = await getSalonHandle();
   await handle.signal("cancelOpening", cancellation);
@@ -113,4 +107,4 @@ app.use(
 );
 
 const port = Number(process.env.PORT ?? 3000);
-app.listen(port, () => console.log(`Juniper Waitlist is available at http://localhost:${port}`));
+app.listen(port, "127.0.0.1", () => console.log(`Juniper Waitlist is available at http://localhost:${port}`));

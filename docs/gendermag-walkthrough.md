@@ -20,6 +20,8 @@ Carla sees a same-day cancellation, adds the exact service, stylist, time, and l
 
 The queue button now says “Start sequential offers” and shows the number of openings. This makes the one-at-a-time behavior visible at the point where staff begin the process.
 
+The final walkthrough also added explicit late/repeated-reply outcomes, a staff-selected practical cutoff with visible time-zone guidance, and cancellation controls with distinct consequences. A polling refresh no longer replaces unchanged controls, preserving keyboard focus. Simulated outcomes stay visible so staff can inspect what happened. The seven browser check groups in `scripts/browser-check.mjs` exercised these controls and inspected desktop/mobile layouts.
+
 ## Scope of this review
 
 This walkthrough checks discoverability and feedback in the staff cancellation flow. It does not test the interface with salon staff or evaluate real SMS, Square, travel-time, or waitlist-maintenance integrations; those are outside this local prototype.

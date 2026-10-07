@@ -50,11 +50,16 @@
                 </label>
                 <label>Stylist
                   <select name="stylist" required>
-                    <option>Jules</option><option>Rosa</option><option>Any stylist</option>
+                    <option>Jules</option><option>Rosa</option>
                   </select>
                 </label>
                 <label class="span-two">Date and start time
                   <input name="startsAt" id="starts-at" type="datetime-local" required />
+                  <span class="hint" id="timezone-hint"></span>
+                </label>
+                <label class="span-two">Last practical response time (optional)
+                  <input name="offerUntil" type="datetime-local" />
+                  <span class="hint">Allow time for travel and the service. Offers stop at this time; if blank, they stop at the appointment start.</span>
                 </label>
                 <label class="span-two">Appointment length
                   <select name="durationMinutes" required>
@@ -78,6 +83,7 @@
             <div id="active-offers" class="offer-list" aria-live="polite">
               <div class="empty-state"><span class="empty-icon" aria-hidden="true">✦</span><strong>No offers yet</strong><p>Add a cancellation, then start the offer queue.</p></div>
             </div>
+            <p id="reply-feedback" class="form-feedback" role="status"></p>
           </section>
 
           <section class="panel openings-panel" aria-labelledby="openings-title">
@@ -98,7 +104,7 @@
               <div><p class="eyebrow">Opted-in clients</p><h2 id="waitlist-title">Earlier list</h2></div>
               <span class="count" id="waitlist-count">0 people</span>
             </div>
-            <p class="panel-copy">Matched by service, availability, and stylist preference. Oldest request gets first offer.</p>
+            <p class="panel-copy">Sample clients for this demo. Matched by service, availability, and stylist preference. Oldest eligible request gets first offer.</p>
             <div id="waitlist" class="waitlist"></div>
             <p class="privacy-note"><span aria-hidden="true">✓</span> Opt-outs are never contacted.</p>
           </section>

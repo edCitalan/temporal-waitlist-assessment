@@ -117,6 +117,7 @@ input:focus, select:focus { border-color: #83a494; outline: 3px solid #e3eee7; }
 .offer-person span { margin-top: 3px; color: #69766d; font-size: 10px; }
 .message-preview { margin: 0; padding: 11px 12px; border-left: 3px solid #c48168; border-radius: 0 8px 8px 0; background: #fff7f2; color: #604a40; font-size: 11px; line-height: 1.55; }
 .deadline { margin: 9px 0 10px; color: #778078; font-size: 10px; }
+.reply-outcome { margin: 10px 0; padding: 10px; background: #eaf2ed; color: #273b34; font-size: 12px; line-height: 1.5; }
 .client-actions { display: flex; flex-wrap: wrap; gap: 7px; }
 .client-actions .button { min-height: 34px; padding: 7px 10px; font-size: 10px; }
 .text-action { padding: 4px 0; border: 0; background: transparent; color: #4b6956; font-size: 10px; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
