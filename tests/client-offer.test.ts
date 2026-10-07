@@ -55,3 +55,11 @@ test("client status reflects expiry, staff follow-up, acceptance, competing hold
   state.openings[0].status = "closed";
   assert.equal(projectClientOffer(state, "offer-1", before)?.status, "unavailable");
 });
+
+test("client view expires by the simulation clock even before the wall-clock deadline", () => {
+  const state = fixture();
+  state.clockOffsetMs = 15 * 60000;
+  const view = projectClientOffer(state, "offer-1", Date.parse("2030-01-01T00:01:00Z"));
+  assert.equal(view?.status, "expired");
+  assert.equal(view?.canRespond, false);
+});

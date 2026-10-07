@@ -7,6 +7,7 @@ const schedulerHint = document.querySelector("#scheduler-hint");
 let snapshot;
 let renderedState;
 let connectionFailed = false;
+let pendingOpeningRequest;
 const replyFeedback = document.querySelector("#reply-feedback");
 const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 document.querySelector("#timezone-hint").textContent = `Times use ${timeZone.replaceAll("_", " ")}.`;
@@ -38,7 +39,8 @@ function formatDateTime(value) {
   }).format(new Date(value));
 }
 
-function statusLabel(status) {
+function statusLabel(status, squareUpdatedAt) {
+  if (status === "booked" && squareUpdatedAt) return "Accepted · checklist done";
   return ({
     queued: "Queued", offering: "Offer sent", booked: "Accepted · update Square",
     closed: "Closed", unfilled: "No match yet", waiting: "Awaiting reply",
@@ -77,9 +79,35 @@ function renderOpenings(openings, offersRunning) {
   openingList.innerHTML = ordered.map((opening) => `
     <article class="opening-row">
       <span class="opening-icon" aria-hidden="true">${opening.status === "booked" ? "✓" : "◷"}</span>
-      <div class="opening-info"><strong>${escapeHtml(opening.service)} with ${escapeHtml(opening.stylist)}</strong><span>${escapeHtml(opening.displayTime)} · ${opening.durationMinutes} min</span><small>${escapeHtml(opening.note)}</small>${["queued", "unfilled"].includes(opening.status) ? `<button class="text-action danger" data-action="cancel" data-still-open="false" data-opening="${escapeHtml(opening.id)}">Close opening</button>` : ""}</div>
-      <span class="status-pill status-${escapeHtml(opening.status)}">${escapeHtml(statusLabel(opening.status))}</span>
+      <div class="opening-info"><strong>${escapeHtml(opening.service)} with ${escapeHtml(opening.stylist)}</strong><span>${escapeHtml(opening.displayTime)} · ${opening.durationMinutes} min</span><small>${escapeHtml(opening.note)}</small><a class="text-action" href="/openings/${encodeURIComponent(opening.id)}">View details and timeline</a>${squareChecklist(opening)}${["queued", "unfilled"].includes(opening.status) ? `<button class="text-action danger" data-action="cancel" data-still-open="false" data-opening="${escapeHtml(opening.id)}">Close opening</button>` : ""}</div>
+      <span class="status-pill status-${escapeHtml(opening.status)}">${opening.squareUpdatedAt ? "Accepted · checklist done" : escapeHtml(statusLabel(opening.status, opening.squareUpdatedAt))}</span>
     </article>`).join("");
+}
+
+function squareChecklist(opening) {
+  if (opening.status !== "booked") return "";
+  const client = snapshot.waitlist.find(entry => entry.id === opening.bookedClientId)?.name || "Accepted client";
+  return `<div class="handoff"><strong>Update Square manually</strong><p>${escapeHtml(client)} · ${escapeHtml(opening.service)} with ${escapeHtml(opening.stylist)} · ${escapeHtml(opening.displayTime)} · ${opening.durationMinutes} minutes</p><p>${opening.squareUpdatedAt ? `Marked done by ${escapeHtml(opening.squareUpdatedBy)} at ${formatDateTime(opening.squareUpdatedAt)}.` : "Front desk: update the official calendar, then mark this checklist done."}</p><button class="button button-outline" data-action="square" data-opening="${escapeHtml(opening.id)}" data-completed="${!opening.squareUpdatedAt}">${opening.squareUpdatedAt ? "Reopen Square checklist" : "Mark manual Square update done"}</button><small>This only records your checklist status here. It does not connect to Square.</small></div>`;
+}
+
+function renderMessages(messages) {
+  if (!messages?.length) return '<p class="panel-copy">No recorded simulated messages yet.</p>';
+  return `<ol class="message-timeline">${messages.slice().reverse().map(message => `<li><span class="simulated-label">SIMULATED ${escapeHtml(message.direction.toUpperCase())}</span><small>${formatDateTime(message.at)}${message.clientName ? ` · ${escapeHtml(message.clientName)}` : ""} · ${escapeHtml(message.openingId)}</small><p>${escapeHtml(message.text)}</p></li>`).join("")}</ol>`;
+}
+
+function renderDetail(data) {
+  const match = location.pathname.match(/^\/openings\/([^/]+)\/?$/);
+  if (!match) return;
+  document.body.classList.add("detail-view");
+  document.querySelector("#dashboard-layout").hidden = true;
+  const panel = document.querySelector("#opening-detail");
+  panel.hidden = false;
+  const opening = data.openings.find(o => o.id === decodeURIComponent(match[1]));
+  if (!opening) { panel.innerHTML = '<a href="/">← Back to dashboard</a><h2>Opening not found</h2>'; return; }
+  const offers = data.offers.filter(o => o.openingId === opening.id);
+  const current = offers.find(o => o.id === opening.currentOfferId);
+  const holder = data.waitlist.find(entry => entry.id === opening.bookedClientId)?.name;
+  panel.innerHTML = `<a href="/" class="text-action">← Back to dashboard</a><h2>${escapeHtml(opening.service)} with ${escapeHtml(opening.stylist)}</h2><p>${escapeHtml(opening.displayTime)} · ${opening.durationMinutes} minutes · ${escapeHtml(statusLabel(opening.status, opening.squareUpdatedAt))}</p><p><strong>Who holds it: ${escapeHtml(holder || "Nobody yet")}</strong></p><p>${escapeHtml(opening.note)}</p>${squareChecklist(opening)}<h3>Current offer</h3>${current ? renderOfferCard(current, opening) : '<p>No active offer.</p>'}<h3>Offer history</h3><ol class="message-timeline">${offers.map(offer => `<li><strong>${escapeHtml(offer.clientName)} · ${escapeHtml(statusLabel(offer.status))}</strong><small>Sent: ${offer.sentAt ? formatDateTime(offer.sentAt) : "Not recorded in older history"} · Deadline: ${formatDateTime(offer.deadlineAt)}${offer.respondedAt ? ` · Reply: ${formatDateTime(offer.respondedAt)}` : ""}</small></li>`).join("") || '<li>No offers yet.</li>'}</ol><h3>Simulated message timeline</h3>${renderMessages((data.messages || []).filter(message => message.openingId === opening.id))}<p class="form-feedback" id="detail-feedback" role="status"></p>`;
 }
 
 function renderOfferCard(offer, opening) {
@@ -124,12 +152,16 @@ function renderOffers(offers, openings) {
 
 function render(data) {
   snapshot = data;
-  const next = JSON.stringify(data);
+  document.querySelector("#simulation-time").textContent = formatDateTime(data.clockNow || new Date().toISOString());
+  const { clockNow, ...stableData } = data;
+  const next = JSON.stringify(stableData);
   if (next === renderedState) return; // Polling must not discard a focused button.
   renderedState = next;
   renderWaitlist(data.waitlist);
   renderOpenings(data.openings, data.offersRunning);
   renderOffers(data.offers, data.openings);
+  document.querySelector("#message-inbox").innerHTML = renderMessages(data.messages);
+  renderDetail(data);
 }
 
 async function refresh() {
@@ -152,19 +184,19 @@ document.querySelector("#opening-form").addEventListener("submit", async (event)
   submit.disabled = true;
   try {
     const startsAt = new Date(values.get("startsAt")).toISOString();
-    await api("/api/openings", {
+    const input = {
+      service: values.get("service"), stylist: values.get("stylist"), startsAt, timeZone,
+      offerUntil: values.get("offerUntil") ? new Date(values.get("offerUntil")).toISOString() : undefined,
+      durationMinutes: Number(values.get("durationMinutes")), responseMinutes: Number(values.get("responseMinutes")),
+    };
+    const fingerprint = JSON.stringify(input);
+    if (pendingOpeningRequest?.fingerprint !== fingerprint) pendingOpeningRequest = { fingerprint, requestId: crypto.randomUUID() };
+    const result = await api("/api/openings", {
       method: "POST",
-      body: JSON.stringify({
-        service: values.get("service"),
-        stylist: values.get("stylist"),
-        startsAt,
-        timeZone,
-        offerUntil: values.get("offerUntil") ? new Date(values.get("offerUntil")).toISOString() : undefined,
-        durationMinutes: Number(values.get("durationMinutes")),
-        responseMinutes: Number(values.get("responseMinutes")),
-      }),
+      body: JSON.stringify({ ...input, requestId: pendingOpeningRequest.requestId }),
     });
-    formFeedback.textContent = snapshot?.offersRunning ? "Opening added. The offer queue is running automatically." : "Opening added. Add any other cancellations, then start the offer queue.";
+    pendingOpeningRequest = undefined;
+    formFeedback.textContent = result.code === "duplicate" ? "Opening added previously. The existing opening is shown below." : snapshot?.offersRunning ? "Opening added. The offer queue is running automatically." : "Opening added. Add any other cancellations, then start the offer queue.";
     await refresh();
   } catch (error) {
     formFeedback.textContent = error.message;
@@ -205,14 +237,32 @@ async function handleAction(event) {
         }),
       });
       replyFeedback.textContent = "Staff cancellation recorded. Check the opening status below.";
+    } else if (button.dataset.action === "square") {
+      await api(`/api/openings/${encodeURIComponent(button.dataset.opening)}/square`, { method: "POST", body: JSON.stringify({ completed: button.dataset.completed === "true" }) });
+      replyFeedback.textContent = "Manual Square checklist updated. No connection to Square was made.";
     }
     await refresh();
+    const detailFeedback = document.querySelector("#detail-feedback");
+    if (detailFeedback) detailFeedback.textContent = replyFeedback.textContent;
   } catch (error) {
     replyFeedback.textContent = error.message;
+    const detailFeedback = document.querySelector("#detail-feedback");
+    if (detailFeedback) detailFeedback.textContent = error.message;
   } finally { button.disabled = false; }
 }
 activeOffers.addEventListener("click", handleAction);
 openingList.addEventListener("click", handleAction);
+document.querySelector("#opening-detail").addEventListener("click", handleAction);
+document.querySelector("#advance-clock").addEventListener("click", async event => {
+  const button = event.currentTarget;
+  button.disabled = true;
+  try {
+    await api("/api/simulation/advance", { method: "POST", body: JSON.stringify({ minutes: 15 }) });
+    document.querySelector("#clock-feedback").textContent = "Simulation advanced 15 minutes. Due offers expired and the queue moved forward.";
+    await refresh();
+  } catch (error) { document.querySelector("#clock-feedback").textContent = error.message; }
+  finally { button.disabled = false; }
+});
 
 function setDefaultDate() {
   const date = new Date(Date.now() + 24 * 60 * 60 * 1000);

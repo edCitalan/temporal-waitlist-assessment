@@ -1,4 +1,5 @@
 import path from "node:path";
+import { randomUUID } from "node:crypto";
 import {
   Client,
   Connection,
@@ -11,7 +12,7 @@ import type {
   StaffCancellation,
   SalonSnapshot,
 } from "./types";
-import { juniperSalonWorkflow, respondToOffer, salonTaskQueue } from "./workflows";
+import { advanceSimulation, juniperSalonWorkflow, recordSquareUpdate, respondToOffer, salonTaskQueue, submitOpening } from "./workflows";
 import { normalizeOpening } from "./opening-input";
 import { createStaffAuth, loadStaffCredentials } from "./auth";
 import { createOfferLinks, loadOfferLinkSecret, projectClientOffer } from "./client-offer";
@@ -67,6 +68,7 @@ app.post("/api/client/offer/reply", async (request, response) => {
 });
 app.use(auth.requireStaff);
 app.get("/api/auth/session", (_request, response) => response.json({ staff: response.locals.staff }));
+app.get("/openings/:openingId", (_request, response) => response.sendFile(path.join(process.cwd(), "public/index.html")));
 app.use(express.static(path.join(process.cwd(), "public")));
 
 const workflowId = process.env.SALON_WORKFLOW_ID ?? "juniper-salon-waitlist";
@@ -114,8 +116,29 @@ app.post("/api/openings", async (request, response) => {
     return;
   }
   const handle = await getSalonHandle();
-  await handle.signal("createOpening", input);
-  response.status(202).json({ queued: true });
+  input.requestId ??= randomUUID();
+  const result = await handle.executeUpdate(submitOpening, { args: [input] });
+  response.status(result.code === "conflict" ? 409 : result.code === "created" ? 201 : 200)
+    .json({ ...result, ...(result.code === "conflict" ? { error: result.message } : {}) });
+});
+
+app.post("/api/simulation/advance", async (request, response) => {
+  const minutes = request.body?.minutes;
+  if (!Number.isInteger(minutes) || minutes < 1 || minutes > 1440) {
+    response.status(400).json({ error: "Choose 1 to 1440 whole minutes." }); return;
+  }
+  const handle = await getSalonHandle();
+  response.json(await handle.executeUpdate(advanceSimulation, { args: [minutes] }));
+});
+
+app.post("/api/openings/:openingId/square", async (request, response) => {
+  if (typeof request.body?.completed !== "boolean") {
+    response.status(400).json({ error: "Choose whether the manual Square update is complete." }); return;
+  }
+  const handle = await getSalonHandle();
+  const result = await handle.executeUpdate(recordSquareUpdate, { args: [{ openingId: request.params.openingId,
+    completed: request.body.completed, staff: response.locals.staff }] });
+  response.status(result.recorded ? 200 : 409).json(result.recorded ? result : { error: "Only an accepted opening has a Square update to record." });
 });
 
 app.post("/api/offers/start", async (_request, response) => {

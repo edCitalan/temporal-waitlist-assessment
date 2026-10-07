@@ -58,21 +58,21 @@ steps = [
     ("1  Add an opening", "Staff enter the appointment details, reply window (default 15 minutes), and any practical cutoff."),
     ("2  Find a match", "Match service, availability and stylist. Exclude opt-outs. Offer the oldest eligible request first."),
     ("3  Client responds", "Clients accept, decline or ask a question on their offer page. Decline or the reply deadline moves to the next client."),
-    ("4  Confirm one holder", "A clear, valid acceptance reserves the slot here. Late replies get an explanation. Staff update Square."),
+    ("4  Confirm one holder", "A clear, valid acceptance reserves the slot here. Staff update Square manually, then mark the checklist done."),
 ]
 for i, (title, body) in enumerate(steps):
     x = 44+i*223
     box(x, 218, 203, 207)
     text(x+16, 236, title, 17, GREEN, 172, "Helvetica-Bold")
     text(x+16, 280, body, 15, INK, 172)
-text(44, 447, "Staff can cancel an offer and try the next person, or close the opening and stop. Temporal retains the wait and outcome when the worker restarts.", 16, MUTED, 866)
+text(44, 447, "Open the detail page for the holder and message timeline. Fast-forward 15 minutes to demonstrate no reply. Temporal preserves the clock and deadlines after restart.", 16, MUTED, 866)
 c.showPage()
 
 page(3, "Verification and prototype boundaries", "Checked behavior. Clearly stated limits.",
-     "26 automated tests passed, plus 14 browser checks across staff and client pages.")
+     "37 automated tests passed, plus 17 browser checks across staff and client pages.")
 box(44, 215, 424, 264)
 text(63, 232, "What passed", 21, GREEN, 385, "Helvetica-Bold")
-text(63, 272, "<b>Staff:</b> Lena and Carla sign in to manage offers and see the holder.<br/><br/><b>Clients:</b> personal offer links allow replies without staff access; both screens show the outcome.<br/><br/><b>Reliability:</b> matching, timeouts, cancellation, one holder and recovery after worker restart.", 16, INK, 382)
+text(63, 272, "<b>Staff:</b> protected access, message history and a manual Square checklist.<br/><br/><b>Clients:</b> personal links show exact details, response choices and the result.<br/><br/><b>Reliability:</b> duplicate protection, matching, timeouts, cancellation races, one holder and worker restart.", 16, INK, 382)
 box(490, 215, 426, 264, "#fff5ef")
 text(509, 232, "What is simulated or excluded", 21, CORAL, 385, "Helvetica-Bold")
 text(509, 272, "<b>No real SMS.</b> Open the client's personal link from the staff demo. The client page is clearly simulated.<br/><br/><b>No Square connection.</b> Staff update it manually.<br/><br/><b>Sample waitlist.</b> Live intake and opt-out management remain future work. Staff passwords are local.", 16, INK, 381)

@@ -26,6 +26,8 @@ The completed access revision adds a two-account staff selector, an optional sho
 
 ## Scope of this review
 
+The deep audit adds an opening detail page with preserved message history and timestamps, a persistent manual Square checklist, and a visible simulation clock. Completion and reopening of the checklist have explicit consequences; the page states that recording the check does not connect to Square. Duplicate appointment submissions return a clear explanation instead of creating another offer. Detail pages use a compact header so staff reach the appointment information sooner on mobile. These changes extend the task-based review; they are not a staff usability study.
+
 The separate client offer page now gives clients their own appointment details, exact deadline, prominent accept/decline choices and a question form. Confirmation, decline, expiration, cancellation and taken states explain the result. In the latest 14 browser/API check groups, a client with no staff session submits a question, declines, or accepts while a separate staff dashboard observes the outcome. A staff-selected seven-minute window appears correctly on the client page. Staff and client pages were visually inspected at desktop and mobile widths. This clarifies the roles that were previously represented together in the staff simulation.
 
 This walkthrough checks discoverability and feedback in the staff cancellation flow. It does not test the interface with salon staff or evaluate real SMS, Square, travel-time, or waitlist-maintenance integrations; those are outside this local prototype.

@@ -34,7 +34,7 @@ try {
   await page.goto(base);
   await page.getByRole("heading", { name: "Staff sign-in" }).waitFor();
   assert.equal((await context.request.get(`${base}/api/salon`)).status(), 401);
-  for (const route of ["/api/openings", "/api/offers/start", "/api/offers/missing/reply", "/api/openings/missing/cancel"]) {
+  for (const route of ["/api/openings", "/api/offers/start", "/api/offers/missing/reply", "/api/openings/missing/cancel", "/api/simulation/advance", "/api/openings/missing/square"]) {
     assert.equal((await context.request.post(base + route, { data: {} })).status(), 401);
   }
   await page.locator('[name="password"]').fill("wrong-password");
@@ -84,6 +84,14 @@ try {
   assert.ok(replyWindow >= 7 * 60000 && replyWindow < 7 * 60000 + 30000);
   const staffData = await (await context.request.get(`${base}/api/salon`)).json();
   assert.equal(staffData.openings[0].responseMinutes, 7);
+  const originalInput = staffData.openings[0];
+  const repeated = await context.request.post(`${base}/api/openings`, { data: originalInput });
+  assert.equal(repeated.status(), 200);
+  assert.equal((await repeated.json()).code, "duplicate");
+  const duplicateSlot = await context.request.post(`${base}/api/openings`, { data: { ...originalInput, requestId: randomUUID() } });
+  assert.equal(duplicateSlot.status(), 409);
+  assert.equal((await (await context.request.get(`${base}/api/salon`)).json()).openings.length, 1);
+  checks.push("Retrying an opening is idempotent; a second staff request for the same stylist/time is rejected without another offer.");
   checks.push("Staff chooses a 7-minute reply window; the workflow and separate client page show the matching deadline.");
   assert.ok(!JSON.stringify(ownOffer).includes("Jordan Lee"));
   assert.equal(ownOffer.waitlist, undefined);
@@ -133,7 +141,30 @@ try {
   assert.equal(state.openings[0].bookedClientId, "jordan-lee-haircut");
   checks.push("Decline advances; late reply is rejected; clear acceptance identifies Jordan and Square handoff; retries keep one holder.");
 
-  await add("Highlights");
+  const detail = await context.newPage();
+  detail.on("pageerror", e => errors.push(e.message));
+  await detail.goto(base + "/openings/" + state.openings[0].id);
+  const detailPanel = detail.locator("#opening-detail");
+  await detailPanel.getByText("Who holds it: Jordan Lee", { exact: true }).waitFor();
+  assert.match(await detailPanel.innerText(), /Can I keep the same haircut length/);
+  assert.match(await detailPanel.innerText(), /Sent:.*Deadline:/);
+  await detailPanel.getByRole("button", { name: "Mark manual Square update done", exact: true }).click();
+  await detailPanel.getByRole("button", { name: "Reopen Square checklist", exact: true }).waitFor();
+  await detail.reload();
+  await detailPanel.getByText("Marked done by lena", { exact: false }).waitFor();
+  await detail.setViewportSize({ width: 1100, height: 950 });
+  await detail.evaluate(() => window.scrollTo(0, document.querySelector("#opening-detail").offsetTop - 16));
+  await detail.screenshot({ path: ".local/opening-detail-desktop.png" });
+  await detail.setViewportSize({ width: 390, height: 844 });
+  await detail.evaluate(() => window.scrollTo(0, document.querySelector("#opening-detail").offsetTop - 16));
+  assert.equal(await detail.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  await detail.screenshot({ path: ".local/opening-detail-mobile.png" });
+  await detailPanel.getByRole("button", { name: "Reopen Square checklist", exact: true }).click();
+  await detailPanel.getByRole("button", { name: "Mark manual Square update done", exact: true }).waitFor();
+  await detail.close();
+  checks.push("Opening detail preserves the full message timeline, holder and offer timestamps; manual Square checklist survives reload and can be reopened.");
+
+  await add("Highlights", "Jules", "16:00");
   await card("Sam Patel").waitFor();
   const samPage = await clientContext.newPage();
   await samPage.goto(base + await card("Sam Patel").getByRole("link", { name: "Open client offer page" }).getAttribute("href"));
@@ -144,7 +175,7 @@ try {
   assert.equal(await samPage.locator("#client-actions").isVisible(), false);
   checks.push("Staff cancellation updates the separate client page and removes acceptance controls.");
   checks.push("Cancel-and-try-next exhausts the single Highlights request without reoffering it.");
-  await add("Color");
+  await add("Color", "Jules", "17:00");
   await card("Sam Patel").waitFor();
   await card("Sam Patel").getByRole("button", { name: "Close opening", exact: true }).click();
   await page.waitForFunction(() => document.querySelector("#opening-list").textContent.includes("Opening closed"));
@@ -174,6 +205,22 @@ try {
   await card("Maya Rivera").getByRole("button", { name: "Close opening", exact: true }).click();
   await page.waitForFunction(() => document.querySelector("#active-count").textContent === "0 active");
   checks.push("Logout revokes the old session; Carla signs in, sees shared outcomes, adds and closes an opening.");
+  await page.locator('[name="responseMinutes"]').fill("15");
+  await add("Haircut", "Rosa", "16:00");
+  await card("Maya Rivera").waitFor();
+  const timeoutPage = await clientContext.newPage();
+  await timeoutPage.goto(base + await card("Maya Rivera").getByRole("link", { name: "Open client offer page" }).getAttribute("href"));
+  await timeoutPage.getByRole("button", { name: "Accept this appointment", exact: true }).waitFor();
+  await page.getByRole("button", { name: "Fast-forward 15 minutes", exact: true }).click();
+  await page.getByText("Simulation advanced 15 minutes.", { exact: false }).waitFor();
+  await timeoutPage.waitForFunction(() => document.querySelector("#client-status").dataset.status === "expired");
+  assert.equal(await timeoutPage.locator("#client-actions").isVisible(), false);
+  const advanced = await (await context.request.get(`${base}/api/salon`)).json();
+  assert.equal(advanced.clockOffsetMs, 15 * 60000);
+  assert.equal(advanced.offers.at(-1).status, "expired");
+  assert.match(await page.locator("#message-inbox").innerText(), /reply window ended/);
+  checks.push("Fast-forward button expires an unanswered offer, records its timeline and disables acceptance on the client page.");
+  assert.equal(errors.length, 0, errors.join("\n"));
   await writeFile(".local/browser-check-results.json", JSON.stringify({ checkedAt: new Date().toISOString(), workflowId, checks }, null, 2));
   console.log(`PASS: ${checks.length} browser/API checks\n${checks.join("\n")}`);
 } finally {

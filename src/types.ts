@@ -18,6 +18,7 @@ export type WaitlistEntry = {
 };
 
 export type OpeningInput = {
+  requestId?: string;
   service: Service;
   stylist: string;
   startsAt: string;
@@ -39,6 +40,8 @@ export type Opening = OpeningInput & {
   currentOfferId?: string;
   bookedClientId?: string;
   note: string;
+  squareUpdatedAt?: string;
+  squareUpdatedBy?: "lena" | "carla";
 };
 
 export type Offer = {
@@ -50,6 +53,8 @@ export type Offer = {
   stylist: string;
   startsAt: string;
   deadlineAt: string;
+  sentAt?: string;
+  respondedAt?: string;
   status: "waiting" | "needs-follow-up" | "accepted" | "declined" | "expired" | "cancelled";
   message: string;
   lastReply?: ReplyResult;
@@ -61,7 +66,22 @@ export type SalonSnapshot = {
   offers: Offer[];
   offersRunning: boolean;
   lastUpdated: string;
+  clockOffsetMs?: number;
+  clockNow?: string;
+  messages?: SimulatedMessage[];
 };
+
+export type SimulatedMessage = {
+  id: string;
+  openingId: string;
+  offerId?: string;
+  clientName?: string;
+  at: string;
+  direction: "outgoing" | "incoming" | "staff";
+  text: string;
+};
+
+export type OpeningResult = { code: "created" | "duplicate" | "conflict"; openingId?: string; message: string };
 
 export type ClientReply = {
   offerId: string;

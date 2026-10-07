@@ -2,7 +2,25 @@
 
 Only mark an item complete after its stated behavior is observed. Edward authorized completing the whole list with behavior tests and checkpoint updates on October 7, 2026.
 
-## Latest 12-rule specification: verified October 7, 2026
+## Deep audit: October 7, 2026
+
+The earlier completion statement covered the abbreviated twelve-rule list and missed requested details from the earlier specification. The audit found that duplicate creation requests could also create separate records for the same physical appointment. These findings are recorded here rather than hidden in the prior pass counts.
+
+- [x] Prevent repeated create requests from adding another opening; reject another non-closed opening for the same stylist and exact start. Conflicting reuse of a request ID is rejected. Concurrent submissions and repeated requests are covered by tests and HTTP/browser checks.
+- [x] Add the requested **Fast-forward 15 minutes** control. It processes intermediate deadlines in order, including five-minute offers, and expires client links correctly. A worker restart preserves the advanced clock and original deadline.
+- [x] Add a protected opening detail page with the current holder, offers, sent/deadline/response timestamps and complete message history for newly recorded events.
+- [x] Retain original messages and questions after later replies; display all simulated messages in the dashboard timeline.
+- [x] Add a persistent manual Square checklist with client, service, stylist, date/time and duration. Staff can mark it done or reopen it. Tests check that unbooked openings cannot be marked complete and no integration is used.
+- [x] Check acceptance racing with staff closure, acceptance at the deadline, release of a client's service lock, input validation and client-link isolation.
+- [x] Replay the existing local workflow history successfully and verify the restarted app preserves the existing demo records and local login.
+- [x] Type checking passes. All 37 automated tests pass; all 17 browser/API check groups pass in the audit run.
+- [x] Limit Docker's published Temporal ports to loopback; `docker compose config --quiet` validates the configuration. Native startup was exercised. Docker execution was not retested because Docker Desktop is unavailable here.
+- [x] Finish the final visual/documentation check: desktop/mobile opening details and all four rendered PDF slides inspected; README and assumptions updated. Final type check, 37 tests and 17 browser/API groups pass after the display changes. Existing demo records and login verified again.
+- [ ] Push the audit revision.
+
+Current assumptions: a question keeps its original reply deadline; staff set practical cutoffs; priority applies to openings waiting for dispatch. Duplicate protection covers retries and identical stylist/start combinations. Staff remain responsible for checking other overlaps and real calendar availability in Square. Imported older snapshots may lack original timestamps/messages; the interface labels missing timestamps rather than inventing them. PostHog remains deferred. Assessment portal submission and presenting the slides are Edward's remaining assessment actions, not application features.
+
+## Previous 12-rule baseline: verified October 7, 2026
 
 The missing configurable reply window is implemented. Type checking passed, all 26 automated tests passed, and all 14 browser/API check groups passed. Existing local Temporal history replayed successfully, and the restarted app preserved the demo records.
 
@@ -33,7 +51,7 @@ The missing configurable reply window is implemented. Type checking passed, all 
 
 No SMS, Square, Google Sheets or PostHog connection is implemented. The front desk performs the real calendar update manually. Authenticated staff see the offer list; clients see only the individual offer authorized by their personal link. These are assistant-run checks, not a claim that Lena or Edward performed a final review.
 
-## Lena's requirements: current status
+## Lena's requirements: earlier verified baseline
 
 The offer flow, staff access and separate client offer page are implemented and tested. Historical evidence for earlier versions is retained below; the latest client-page verification appears first.
 

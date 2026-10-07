@@ -34,7 +34,14 @@
         <p><strong>Prototype only.</strong> Messages below are simulations. No SMS is sent, and Square is not connected. A clear acceptance reserves the opening here; front-desk staff still update Square.</p>
       </section>
 
-      <section class="layout">
+      <section class="panel simulation-clock" aria-label="Simulation clock">
+        <div><strong>Simulation clock</strong><p id="simulation-time" class="panel-copy"></p><small>Advance the whole demo to test no replies. Appointment times stay fixed.</small></div>
+        <button id="advance-clock" class="button button-secondary" type="button">Fast-forward 15 minutes</button>
+        <p id="clock-feedback" class="form-feedback" role="status"></p>
+      </section>
+      <section id="opening-detail" class="panel" hidden></section>
+
+      <section class="layout" id="dashboard-layout">
         <div class="primary-column">
           <section class="panel create-panel" aria-labelledby="create-title">
             <div class="panel-heading">
@@ -99,6 +106,10 @@
             <div id="opening-list" class="opening-list">
               <div class="empty-state compact"><strong>No openings queued</strong><p>New cancellations will appear here.</p></div>
             </div>
+          </section>
+          <section class="panel" aria-labelledby="inbox-title">
+            <div class="panel-heading"><div><p class="eyebrow">All simulated messages</p><h2 id="inbox-title">Message timeline</h2></div></div>
+            <div id="message-inbox"></div>
           </section>
         </div>
 

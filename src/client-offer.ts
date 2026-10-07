@@ -35,6 +35,7 @@ export function createOfferLinks(secret: string) {
 
 /** Only this client's offer is exposed; never the waitlist, other recipients or staff notes. */
 export function projectClientOffer(snapshot: SalonSnapshot, offerId: string, now = Date.now()) {
+  now += snapshot.clockOffsetMs ?? 0;
   const offer = snapshot.offers.find(o => o.id === offerId);
   const opening = snapshot.openings.find(o => o.id === offer?.openingId);
   if (!offer || !opening) return;

@@ -189,3 +189,19 @@ textarea { font: inherit; width: 100%; padding: 10px; border: 1px solid #dcd8ce;
   .panel-heading .button-secondary { max-width: 175px; line-height: 1.35; }
   footer { flex-direction: column; }
 }
+/* Staff audit trail and manual calendar handoff. */
+.simulation-clock { margin-bottom: 24px; display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; }
+.simulation-clock small { display: block; color: var(--muted); }
+.simulation-clock .panel-copy { margin: 8px 0 12px; }
+.simulation-clock .form-feedback { flex-basis: 100%; margin: 0; }
+.handoff { margin-top: 14px; padding: 16px; background: #eaf2ed; border: 1px solid #c9ded1; border-radius: 12px; }
+.handoff p { margin: 9px 0; }
+.handoff small { display: block; margin-top: 9px; }
+.message-timeline { list-style: none; margin: 12px 0; padding: 0; }
+.message-timeline li { border-bottom: 1px solid #e2ddd2; padding: 15px 0; overflow-wrap: anywhere; }
+.message-timeline small { display: block; margin: 8px 0; color: #58675e; }
+.message-timeline p { margin: 9px 0; }
+#opening-detail h2, #opening-detail h3 { margin-top: 24px; }
+.detail-view .hero { min-height: 0; padding: 16px 0; display: flex; justify-content: flex-end; }
+.detail-view .hero > div { display: none; }
+.detail-view .today-card { margin: 0; }
