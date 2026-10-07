@@ -1,37 +1,8 @@
-# Temporal post-assessment starter
+# Juniper Salon earlier-appointment offers
 
-This repository provides a working local Temporal environment, API, Worker, and browser interface. The included neutral demo is intentionally unrelated to the customer’s final process. Use what you learn in the customer conversation to replace it.
+A local prototype for managing cancellations at Juniper Salon. Staff add one or more openings, then Temporal offers each opening to the oldest eligible opted-in client, one client at a time. A clear acceptance reserves the opening in this prototype; front-desk staff still update Square.
 
-## Important: create a new public repository—do not fork
-
-Your submission must be in a brand-new **public** GitHub repository. **Do not use GitHub’s Fork button.** Forks connect submissions through GitHub’s fork network and can make other participants’ work easier to locate.
-
-Do not add `john-b-yang` or `vishakhpk` as collaborators. Because the repository is public, the assessment team can review it without write access.
-
-Before the timed assessment:
-
-1. Create a new **public** repository in your assigned GitHub organization. Do not initialize it with a README.
-2. Clone the starter:
-
-   ```bash
-   git clone <STARTER_REPOSITORY_URL> temporal-assessment
-   cd temporal-assessment
-   ```
-
-3. Point the clone at your new repository:
-
-   ```bash
-   git remote remove origin
-   git branch -M main
-   git remote add origin git@github.com:<YOUR_ORGANIZATION>/<YOUR_REPOSITORY>.git
-   git push -u origin main
-   ```
-
-4. Confirm that GitHub displays the **Public** label and does not say “forked from” another repository.
-
-If you accidentally create a fork, do not push assessment work to it. Create a new public repository, change your local `origin`, and ask the course team to remove the fork. Do not search for or view other participants’ assessment repositories.
-
-## Verify setup before the timed assessment
+## Run locally
 
 Requirements: Node.js 20 or newer and Docker Desktop.
 
@@ -40,30 +11,42 @@ npm install
 npm run dev
 ```
 
-Open <http://localhost:3000>, run the demo, and confirm that it completes. You can inspect it in the Temporal Web UI at <http://localhost:8233>. Setup time does not count toward the assessment.
+Open <http://localhost:3000>. The local Temporal Web UI is at <http://localhost:8233>. Stop the app with `Ctrl+C`; stop the Temporal container with `npm run stop`.
 
-Other commands:
+Useful checks:
 
 ```bash
-npm test          # Run the starter Workflow test without Docker
-npm run typecheck # Check TypeScript
-npm run stop      # Stop the local Temporal service
+npm run typecheck
+npm test
 ```
 
-## Repository map
+The Temporal test environment downloads its test server the first time it runs, so network access may be needed.
 
-- `src/workflows.ts` — durable Workflow logic and message handlers
-- `src/worker.ts` — Worker and Task Queue configuration
-- `src/api.ts` — browser-facing API and Temporal Client
+## Prototype behavior
+
+- Matches service, availability, and stylist preference; opted-out clients are excluded.
+- Orders openings by appointment time, then creation time. Within each opening, the oldest matching waitlist request gets the first offer.
+- Sends one simulated offer at a time for an opening, with a 15-minute durable Temporal wait. Declines and timeouts move to the next eligible client.
+- Simulated accept, decline, question, and staff-cancellation controls let evaluators demonstrate the flow locally.
+- A question requests staff follow-up and does not reserve the opening. A clear acceptance marks the opening booked and identifies the client.
+- Each client can have at most one active offer per service. Separate service requests can be offered independently.
+- Every simulated message is labeled. No SMS is sent, and Square is not connected.
+
+The sample waitlist is seeded in `src/workflows.ts`. Availability matching uses the sample's simple time categories; travel time and service practicality remain staff judgment, as Lena requested.
+
+## Project map
+
+- `output/presentation/juniper-salon-prototype.pdf` — three standalone slides for Lena
+- `src/workflows.ts` — durable offer queue, timeout, matching, replies, and cancellation behavior
+- `src/api.ts` — local API and Temporal client
+- `src/worker.ts` — Temporal worker
 - `src/types.ts` — shared data types
-- `public/` — customer-facing interface
-- `tests/` — Workflow test example
+- `public/` — staff dashboard and simulated client actions
+- `tests/workflow.test.ts` — workflow test
+- `docs/gendermag-walkthrough.md` — task-based usability review
 
-You may change any application file. Do not edit generated files in `node_modules`.
+## References used
 
-## Documentation
-
-- [TypeScript developer guide](https://docs.temporal.io/develop/typescript)
-- [Workflows](https://docs.temporal.io/workflows)
-- [Activities](https://docs.temporal.io/activities)
-- [Signals, Queries, and Updates](https://docs.temporal.io/encyclopedia/workflow-message-passing)
+- [Temporal TypeScript developer guide](https://docs.temporal.io/develop/typescript) and [Workflow message passing](https://docs.temporal.io/encyclopedia/workflow-message-passing) informed the durable wait and signal/query design.
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/intro.html) informed the shared typed data model.
+- [GenderMag](https://gendermag.org/gendermag.php) informed a task-based usability review: clear next steps, visible status, explicit response choices, and a visible consequence for each action.

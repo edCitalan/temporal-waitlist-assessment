@@ -3,31 +3,120 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Temporal assessment starter</title>
+    <meta name="theme-color" content="#f6f3ed" />
+    <title>Juniper Salon · Earlier appointment offers</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Juniper Salon home">
+        <span class="brand-mark" aria-hidden="true">J</span>
+        <span>juniper <small>SALON</small></span>
+      </a>
+      <span class="demo-badge">SIMULATION · NO REAL TEXTS</span>
+    </header>
+
     <main>
-      <p class="eyebrow">Temporal assessment starter</p>
-      <h1>Your environment is connected.</h1>
-      <p class="intro">
-        This neutral demonstration starts a Workflow, waits durably for a
-        Signal, and then completes. Replace it with the experience your
-        customer needs.
-      </p>
-      <section class="card">
-        <h2 id="phase">Ready</h2>
-        <p id="message">Start the demonstration to verify the setup.</p>
-        <button id="start">Start demo Workflow</button>
-        <button id="continue" hidden>Send continue Signal</button>
-        <p class="request-id" id="request-id"></p>
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Earlier appointment list</p>
+          <h1>Fill the opening.<br /><em>Keep everyone in the loop.</em></h1>
+          <p class="intro">Make one clear offer at a time. When a client accepts, staff update Square as usual.</p>
+        </div>
+        <aside class="today-card">
+          <span class="live-dot" aria-hidden="true"></span>
+          <div><strong>Staff view</strong><small>Lena and Carla · Juniper Salon</small></div>
+        </aside>
       </section>
-      <p class="footer">
-        Inspect the execution at
-        <a href="http://localhost:8233" target="_blank">localhost:8233</a>.
-      </p>
+
+      <section class="notice" aria-label="Prototype limits">
+        <span class="notice-icon" aria-hidden="true">i</span>
+        <p><strong>Prototype only.</strong> Messages below are simulations. No SMS is sent, and Square is not connected. A clear acceptance reserves the opening here; front-desk staff still update Square.</p>
+      </section>
+
+      <section class="layout">
+        <div class="primary-column">
+          <section class="panel create-panel" aria-labelledby="create-title">
+            <div class="panel-heading">
+              <div><p class="eyebrow">When a cancellation comes in</p><h2 id="create-title">Add an open appointment</h2></div>
+              <span class="step">01</span>
+            </div>
+            <form id="opening-form">
+              <div class="form-grid">
+                <label>Service
+                  <select name="service" required>
+                    <option>Haircut</option><option>Color</option><option>Highlights</option>
+                  </select>
+                </label>
+                <label>Stylist
+                  <select name="stylist" required>
+                    <option>Jules</option><option>Rosa</option><option>Any stylist</option>
+                  </select>
+                </label>
+                <label class="span-two">Date and start time
+                  <input name="startsAt" id="starts-at" type="datetime-local" required />
+                </label>
+                <label class="span-two">Appointment length
+                  <select name="durationMinutes" required>
+                    <option value="30">30 minutes</option><option value="45">45 minutes</option>
+                    <option value="60" selected>1 hour</option><option value="90">1½ hours</option>
+                    <option value="120">2 hours</option><option value="180">3 hours</option>
+                  </select>
+                  <span class="hint">Use your judgment about whether there’s enough time for someone to get here.</span>
+                </label>
+              </div>
+              <button class="button button-primary" type="submit">Add opening to queue <span aria-hidden="true">→</span></button>
+              <p class="form-feedback" id="form-feedback" role="status"></p>
+            </form>
+          </section>
+
+          <section class="panel offers-panel" aria-labelledby="offers-title">
+            <div class="panel-heading">
+              <div><p class="eyebrow">One at a time · 15-minute reply window</p><h2 id="offers-title">Offers in progress</h2></div>
+              <span class="count" id="active-count">0 active</span>
+            </div>
+            <div id="active-offers" class="offer-list" aria-live="polite">
+              <div class="empty-state"><span class="empty-icon" aria-hidden="true">✦</span><strong>No offers yet</strong><p>Add a cancellation, then start the offer queue.</p></div>
+            </div>
+          </section>
+
+          <section class="panel openings-panel" aria-labelledby="openings-title">
+            <div class="panel-heading">
+              <div><p class="eyebrow">Salon schedule</p><h2 id="openings-title">Openings</h2></div>
+              <button id="start-offers" class="button button-secondary" type="button" disabled>Start queued offers <span aria-hidden="true">→</span></button>
+            </div>
+            <p id="scheduler-hint" class="panel-copy"></p>
+            <div id="opening-list" class="opening-list">
+              <div class="empty-state compact"><strong>No openings queued</strong><p>New cancellations will appear here.</p></div>
+            </div>
+          </section>
+        </div>
+
+        <aside class="side-column">
+          <section class="panel waitlist-panel" aria-labelledby="waitlist-title">
+            <div class="panel-heading">
+              <div><p class="eyebrow">Opted-in clients</p><h2 id="waitlist-title">Earlier list</h2></div>
+              <span class="count" id="waitlist-count">0 people</span>
+            </div>
+            <p class="panel-copy">Matched by service, availability, and stylist preference. Oldest request gets first offer.</p>
+            <div id="waitlist" class="waitlist"></div>
+            <p class="privacy-note"><span aria-hidden="true">✓</span> Opt-outs are never contacted.</p>
+          </section>
+
+          <section class="panel how-panel" aria-labelledby="how-title">
+            <p class="eyebrow">The simple version</p>
+            <h2 id="how-title">A clear next step,<br />every time.</h2>
+            <ol class="steps">
+              <li><span>1</span><div><strong>Offer</strong><p>The oldest matching client gets the exact time and service.</p></div></li>
+              <li><span>2</span><div><strong>Wait</strong><p>15 minutes for a clear yes or no. Questions go to staff.</p></div></li>
+              <li><span>3</span><div><strong>Move on</strong><p>Decline or no reply? Contact the next eligible client.</p></div></li>
+            </ol>
+            <div class="square-note"><span class="square-mark">S</span><p><strong>Square stays the source of truth.</strong><br />Front desk staff update it after an acceptance.</p></div>
+          </section>
+        </aside>
+      </section>
+      <footer><span>JUNIPER SALON</span><span>All message examples are simulated for this prototype.</span></footer>
     </main>
     <script src="/app.js"></script>
   </body>
 </html>
-
