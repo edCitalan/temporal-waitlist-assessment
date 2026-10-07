@@ -4,14 +4,25 @@ A local prototype with two separate experiences: a protected dashboard for Lena 
 
 ## Run locally
 
-Requirements: Node.js 20 or newer. Use the native server below, or Docker Desktop for the Docker option. Keep this assessment local; do not deploy it publicly.
+Requirements: Node.js 20 or newer with npm, plus internet access on first run to download dependencies and the Temporal CLI. From the repository directory, run this single command (Windows PowerShell, macOS or Linux):
 
 ```bash
-npm ci
-npm run dev:local
+npm start
 ```
 
-Open [the local dashboard](http://localhost:3000). The [local Temporal Web UI](http://localhost:8233) shows the durable workflow and timer history. Stop the native app with `Ctrl+C`.
+This installs missing locked dependencies automatically and starts the native Temporal server, Worker and API together. Docker is not required. Open [the local dashboard](http://localhost:3000). The [local Temporal Web UI](http://localhost:8233) shows the durable workflow and timer history. Stop the native app with `Ctrl+C`. Keep this assessment local; do not deploy it publicly.
+
+## Submission items
+
+- [Public repository](https://github.com/edCitalan/temporal-waitlist-assessment), created outside GitHub's fork network.
+- One-command startup: `npm start`, as described above.
+- [Temporal Web UI screenshots](evidence/README.md), including workflow identity and durable timer/event history.
+- [Four-slide PDF presentation](output/presentation/juniper-salon-prototype.pdf).
+- [Verification checklist](docs/verification-checklist.md), including checked behavior and prototype limits.
+
+### Additional startup options
+
+For an already-installed checkout, `npm run dev:local` remains available. Run `npm ci` manually after changing dependency versions. The optional Docker path below requires dependencies installed first.
 
 ### Staff sign-in
 
@@ -107,6 +118,8 @@ If the site cannot be reached, keep the development terminal running, check its 
 ## Project map
 
 - `output/presentation/juniper-salon-prototype.pdf` — four standalone slides for Lena
+- `evidence/` — Temporal Web UI screenshot and explanation of the observed workflow
+- `scripts/start.mjs` — one-command dependency setup and native app startup
 - `src/workflows.ts` — durable offer queue, timeout, matching, replies, and cancellation behavior
 - `src/api.ts` — local API and Temporal client
 - `src/auth.ts` — local staff credentials, sessions and server access checks

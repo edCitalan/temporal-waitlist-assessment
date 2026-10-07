@@ -18,6 +18,7 @@ import { createStaffAuth, loadStaffCredentials } from "./auth";
 import { createOfferLinks, loadOfferLinkSecret, projectClientOffer } from "./client-offer";
 
 const app = express();
+const publicDirectory = path.join(process.cwd(), "public");
 app.use(express.json({ limit: "16kb" }));
 const auth = createStaffAuth(loadStaffCredentials());
 const offerLinks = createOfferLinks(loadOfferLinkSecret());
@@ -27,15 +28,15 @@ app.post("/api/auth/logout", auth.logout);
 app.get("/login", (request, response) => {
   response.set("Cache-Control", "no-store");
   if (auth.currentStaff(request)) { response.redirect("/"); return; }
-  response.sendFile(path.join(process.cwd(), "public/login.html"));
+  response.sendFile("login.html", { root: publicDirectory });
 });
-app.get("/styles.css", (_request, response) => response.sendFile(path.join(process.cwd(), "public/styles.css")));
-app.get("/login.js", (_request, response) => response.sendFile(path.join(process.cwd(), "public/login.js")));
+app.get("/styles.css", (_request, response) => response.sendFile("styles.css", { root: publicDirectory }));
+app.get("/login.js", (_request, response) => response.sendFile("login.js", { root: publicDirectory }));
 app.get("/offer", (_request, response) => {
   response.set({ "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" });
-  response.sendFile(path.join(process.cwd(), "public/client-offer.html"));
+  response.sendFile("client-offer.html", { root: publicDirectory });
 });
-app.get("/client-offer.js", (_request, response) => response.sendFile(path.join(process.cwd(), "public/client-offer.js")));
+app.get("/client-offer.js", (_request, response) => response.sendFile("client-offer.js", { root: publicDirectory }));
 app.use("/api/client/offer", async (request, response, next) => {
   response.set({ "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" });
   const token = request.get("authorization")?.replace(/^Bearer /, "") ?? "";
@@ -68,8 +69,8 @@ app.post("/api/client/offer/reply", async (request, response) => {
 });
 app.use(auth.requireStaff);
 app.get("/api/auth/session", (_request, response) => response.json({ staff: response.locals.staff }));
-app.get("/openings/:openingId", (_request, response) => response.sendFile(path.join(process.cwd(), "public/index.html")));
-app.use(express.static(path.join(process.cwd(), "public")));
+app.get("/openings/:openingId", (_request, response) => response.sendFile("index.html", { root: publicDirectory }));
+app.use(express.static(publicDirectory));
 
 const workflowId = process.env.SALON_WORKFLOW_ID ?? "juniper-salon-waitlist";
 let clientPromise: Promise<Client> | undefined;

@@ -2,6 +2,16 @@
 
 Only mark an item complete after its stated behavior is observed. Edward authorized completing the whole list with behavior tests and checkpoint updates on October 7, 2026.
 
+## Submission item check: October 7, 2026
+
+- [x] Public GitHub repository outside the fork network. GitHub repository metadata reports `visibility: PUBLIC` and `isFork: false` for `edCitalan/temporal-waitlist-assessment`.
+- [x] README has one-command run instructions: `npm start`. In a separate checkout without installed dependencies, it installed the locked packages and launched the native Temporal server, Worker and API. Isolated HTTP checks passed for public pages, staff login, seeded data, opening creation, opening details and acceptance. The check also found and fixed static-file handling when the repository's parent is a hidden directory.
+- [x] Actual Temporal Web UI screenshots saved under `evidence/`: `temporal-workflow-overview.jpg` and `temporal-event-history.jpg`. Visually checked workflow identity, running status, worker and meaningful timer/update history.
+- [x] Standalone presentation PDF exists at `output/presentation/juniper-salon-prototype.pdf`; its page count is four. All four slides were visually inspected during the deep audit below.
+- [x] After these submission fixes, type checking and all 37 automated tests pass again. The startup acceptance check used separate ports and a separate workflow; Edward's running demo was preserved. The 17 browser/API groups below are the earlier audit result, not a new browser-suite run.
+
+Edward's manual walkthrough and submission-form completion remain his own final review steps. This checklist does not claim he has completed them.
+
 ## Deep audit: October 7, 2026
 
 The earlier completion statement covered the abbreviated twelve-rule list and missed requested details from the earlier specification. The audit found that duplicate creation requests could also create separate records for the same physical appointment. These findings are recorded here rather than hidden in the prior pass counts.

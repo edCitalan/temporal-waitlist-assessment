@@ -4,15 +4,21 @@ import { mkdir } from "node:fs/promises";
 import path from "node:path";
 
 let nativeEnvironment;
-if (process.argv.includes("--native")) {
+const nativeMode = process.argv.includes("--native");
+const temporalPort = Number(nativeMode ? process.env.TEMPORAL_PORT ?? 7233 : 7233);
+const temporalUiPort = Number(nativeMode ? process.env.TEMPORAL_UI_PORT ?? 8233 : 8233);
+if (![temporalPort, temporalUiPort].every(port => Number.isInteger(port) && port > 0 && port <= 65535)) {
+  throw new Error("Temporal ports must be whole numbers from 1 to 65535.");
+}
+if (nativeMode) {
   const { TestWorkflowEnvironment } = await import("@temporalio/testing");
   await mkdir(path.resolve(".local"), { recursive: true });
   console.log("Starting a native Temporal dev server (first run may download it)...");
   nativeEnvironment = await TestWorkflowEnvironment.createLocal({
     server: {
       ip: "127.0.0.1",
-      port: 7233,
-      uiPort: 8233,
+      port: temporalPort,
+      uiPort: temporalUiPort,
       dbFilename: path.resolve(".local/temporal.db"),
     },
   });
@@ -44,13 +50,13 @@ async function waitForPort(port, timeoutMs = 60_000) {
   throw new Error(`Temporal did not become ready on port ${port}.`);
 }
 
-await waitForPort(7233);
+await waitForPort(temporalPort);
 const children = [
   "src/worker.ts", "src/api.ts",
 ].map((entrypoint) => spawn(process.execPath, ["--import", "tsx", entrypoint], {
   stdio: "inherit",
   windowsHide: true,
-  env: { ...process.env, TEMPORAL_ADDRESS: "127.0.0.1:7233" },
+  env: { ...process.env, TEMPORAL_ADDRESS: `127.0.0.1:${temporalPort}` },
 }));
 let shuttingDown = false;
 async function shutdown(exitCode = 0) {
@@ -75,6 +81,6 @@ for (const child of children) {
   });
 }
 console.log("\nJuniper Salon is launching:");
-console.log("  App:         http://localhost:3000");
-console.log("  Temporal UI: http://localhost:8233\n");
+console.log(`  App:         http://localhost:${process.env.PORT ?? 3000}`);
+console.log(`  Temporal UI: http://localhost:${temporalUiPort}\n`);
 
