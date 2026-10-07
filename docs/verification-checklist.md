@@ -16,7 +16,7 @@ The earlier completion statement covered the abbreviated twelve-rule list and mi
 - [x] Type checking passes. All 37 automated tests pass; all 17 browser/API check groups pass in the audit run.
 - [x] Limit Docker's published Temporal ports to loopback; `docker compose config --quiet` validates the configuration. Native startup was exercised. Docker execution was not retested because Docker Desktop is unavailable here.
 - [x] Finish the final visual/documentation check: desktop/mobile opening details and all four rendered PDF slides inspected; README and assumptions updated. Final type check, 37 tests and 17 browser/API groups pass after the display changes. Existing demo records and login verified again.
-- [ ] Push the audit revision.
+- [x] Push the audit revision (`8586e81`, October 7, 2026).
 
 Current assumptions: a question keeps its original reply deadline; staff set practical cutoffs; priority applies to openings waiting for dispatch. Duplicate protection covers retries and identical stylist/start combinations. Staff remain responsible for checking other overlaps and real calendar availability in Square. Imported older snapshots may lack original timestamps/messages; the interface labels missing timestamps rather than inventing them. PostHog remains deferred. Assessment portal submission and presenting the slides are Edward's remaining assessment actions, not application features.
 
