@@ -12,9 +12,23 @@ import type {
 } from "./types";
 import { juniperSalonWorkflow, respondToOffer, salonTaskQueue } from "./workflows";
 import { normalizeOpening } from "./opening-input";
+import { createStaffAuth, loadStaffCredentials } from "./auth";
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: "16kb" }));
+const auth = createStaffAuth(loadStaffCredentials());
+app.use("/api", auth.sameOrigin);
+app.post("/api/auth/login", auth.login);
+app.post("/api/auth/logout", auth.logout);
+app.get("/login", (request, response) => {
+  response.set("Cache-Control", "no-store");
+  if (auth.currentStaff(request)) { response.redirect("/"); return; }
+  response.sendFile(path.join(process.cwd(), "public/login.html"));
+});
+app.get("/styles.css", (_request, response) => response.sendFile(path.join(process.cwd(), "public/styles.css")));
+app.get("/login.js", (_request, response) => response.sendFile(path.join(process.cwd(), "public/login.js")));
+app.use(auth.requireStaff);
+app.get("/api/auth/session", (_request, response) => response.json({ staff: response.locals.staff }));
 app.use(express.static(path.join(process.cwd(), "public")));
 
 const workflowId = process.env.SALON_WORKFLOW_ID ?? "juniper-salon-waitlist";

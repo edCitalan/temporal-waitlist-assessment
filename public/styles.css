@@ -15,6 +15,15 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
+.login-main { max-width: 470px; margin: 70px auto; }
+.login-panel { padding: 30px; }
+.login-panel h1 { font-size: 42px; margin: 14px 0; }
+.login-panel form { display: grid; gap: 16px; margin-top: 28px; }
+.login-panel .button-primary { margin-top: 0; }
+.show-password { display: flex; align-items: center; gap: 8px; }
+.show-password input { width: 16px; min-height: 16px; }
+.login-help { margin: 12px 0 0; }
 body { margin: 0; min-width: 320px; }
 button, input, select { font: inherit; }
 button { cursor: pointer; }
@@ -73,6 +82,8 @@ input:focus, select:focus { border-color: #83a494; outline: 3px solid #e3eee7; }
 .button-accept { background: var(--green); color: white; }
 .button-outline { border-color: #d7d4ca; background: white; color: #48584f; }
 .form-feedback { min-height: 16px; margin: 8px 0 0; color: var(--muted); font-size: 11px; }
+.login-panel .form-feedback { min-height: 20px; margin: 0; color: #48584f; font-size: 13px; line-height: 1.5; }
+.login-panel .login-help { margin: 18px 0 0; padding-top: 14px; border-top: 1px solid var(--line); font-size: 12px; }
 .panel-copy { margin: -7px 0 15px; color: var(--muted); font-size: 11px; line-height: 1.5; }
 
 .waitlist { display: grid; }

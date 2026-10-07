@@ -22,6 +22,8 @@ The queue button now says “Start sequential offers” and shows the number of 
 
 The final walkthrough also added explicit late/repeated-reply outcomes, a staff-selected practical cutoff with visible time-zone guidance, and cancellation controls with distinct consequences. A polling refresh no longer replaces unchanged controls, preserving keyboard focus. Simulated outcomes stay visible so staff can inspect what happened. The seven browser check groups in `scripts/browser-check.mjs` exercised these controls and inspected desktop/mobile layouts.
 
+The completed access revision adds a two-account staff selector, an optional show-password control, a plain-language sign-in error, a visible signed-in name, and a sign-out control. Nine browser check groups now cover the existing offer flow plus Lena's and Carla's sign-in, rejected access and logout. Sign-in assistance is kept on the login screen; generated credential file locations are documented for the local evaluator.
+
 ## Scope of this review
 
 This walkthrough checks discoverability and feedback in the staff cancellation flow. It does not test the interface with salon staff or evaluate real SMS, Square, travel-time, or waitlist-maintenance integrations; those are outside this local prototype.

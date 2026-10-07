@@ -17,6 +17,11 @@ async function api(url, options = {}) {
     headers: { "Content-Type": "application/json", ...options.headers },
   });
   const body = await response.json().catch(() => ({}));
+  if (response.status === 401) {
+    document.querySelector("main").hidden = true;
+    location.replace("/login?expired=1");
+    throw new Error("Please sign in again.");
+  }
   if (!response.ok) throw new Error(body.error || "The request could not be completed.");
   return body;
 }
@@ -215,5 +220,22 @@ function setDefaultDate() {
 }
 
 setDefaultDate();
-refresh();
-setInterval(refresh, 2000);
+let refreshTimer;
+async function startDashboard() {
+  try {
+    const { staff } = await api("/api/auth/session");
+    document.querySelector("#staff-name").textContent = `Signed in as ${staff === "lena" ? "Lena" : "Carla"}`;
+    await refresh();
+    refreshTimer = setInterval(refresh, 2000);
+  } catch (error) { formFeedback.textContent = error.message; }
+}
+document.querySelector("#sign-out").addEventListener("click", async () => {
+  try {
+    await api("/api/auth/logout", { method: "POST", body: "{}" });
+    clearInterval(refreshTimer);
+    document.querySelector("main").hidden = true;
+    location.replace("/login");
+  } catch (error) { formFeedback.textContent = error.message; }
+});
+window.addEventListener("pageshow", event => { if (event.persisted) location.reload(); });
+startDashboard();

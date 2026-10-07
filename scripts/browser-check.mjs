@@ -11,9 +11,10 @@ const workflowId = `browser-check-${randomUUID()}`;
 const port = Number(process.env.BROWSER_TEST_PORT ?? 3001);
 const base = `http://127.0.0.1:${port}`;
 const checks = [];
+const passwords = { lena: randomUUID(), carla: randomUUID() };
 await mkdir(".local", { recursive: true });
 const api = spawn(process.execPath, ["--import", "tsx", "src/api.ts"], {
-  env: { ...process.env, PORT: String(port), SALON_WORKFLOW_ID: workflowId, TEMPORAL_ADDRESS: "127.0.0.1:7233" },
+  env: { ...process.env, PORT: String(port), SALON_WORKFLOW_ID: workflowId, TEMPORAL_ADDRESS: "127.0.0.1:7233", JUNIPER_LENA_PASSWORD: passwords.lena, JUNIPER_CARLA_PASSWORD: passwords.carla },
   windowsHide: true, stdio: "pipe",
 });
 let browser;
@@ -31,6 +32,26 @@ try {
   const page = await context.newPage();
   page.on("pageerror", e => errors.push(e.message));
   await page.goto(base);
+  await page.getByRole("heading", { name: "Staff sign-in" }).waitFor();
+  assert.equal((await context.request.get(`${base}/api/salon`)).status(), 401);
+  for (const route of ["/api/openings", "/api/offers/start", "/api/offers/missing/reply", "/api/openings/missing/cancel"]) {
+    assert.equal((await context.request.post(base + route, { data: {} })).status(), 401);
+  }
+  await page.locator('[name="password"]').fill("wrong-password");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await page.getByText("The staff account or password is incorrect.", { exact: true }).waitFor();
+  await page.screenshot({ path: ".local/browser-login.png", fullPage: true });
+  const errorBox = await page.locator("#login-feedback").boundingBox();
+  const helpBox = await page.locator(".login-help").boundingBox();
+  assert.ok(helpBox.y >= errorBox.y + errorBox.height + 12, "Sign-in help must not overlap the error message");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: ".local/browser-login-mobile.png", fullPage: true });
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  await page.setViewportSize({ width: 1440, height: 1100 });
+  await page.locator('[name="password"]').fill(passwords.lena);
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await page.getByText("Signed in as Lena", { exact: true }).waitFor();
+  checks.push("Signed-out staff data/actions and wrong credentials are blocked; Lena signs in successfully.");
   await page.getByText("6 opted in", { exact: true }).waitFor();
   assert.match(await page.locator(".notice").innerText(), /No SMS is sent/);
   assert.match(await page.locator("#timezone-hint").innerText(), /America\/Los Angeles/);
@@ -69,7 +90,7 @@ try {
   await maya.getByRole("button", { name: "Simulate late acceptance" }).click();
   await page.waitForFunction(() => document.querySelector("#reply-feedback").textContent.includes("already taken"));
   await page.getByRole("button", { name: "Simulate repeated acceptance" }).click();
-  const state = await (await fetch(`${base}/api/salon`)).json();
+  const state = await (await context.request.get(`${base}/api/salon`)).json();
   assert.equal(state.offers.filter(o => o.status === "accepted").length, 1);
   assert.equal(state.openings[0].bookedClientId, "jordan-lee-haircut");
   checks.push("Decline advances; late reply is rejected; clear acceptance identifies Jordan and Square handoff; retries keep one holder.");
@@ -88,10 +109,27 @@ try {
   await page.screenshot({ path: ".local/browser-mobile.png", fullPage: true });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
   checks.push("390px mobile layout has no horizontal overflow.");
-  const bad = await fetch(`${base}/api/openings`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ service: "Haircut", startsAt: "2000-01-01T00:00:00Z" }) });
-  assert.equal(bad.status, 400);
+  const bad = await context.request.post(`${base}/api/openings`, { data: { service: "Haircut", startsAt: "2000-01-01T00:00:00Z" } });
+  assert.equal(bad.status(), 400);
   assert.equal(errors.length, 0, errors.join("\n"));
   checks.push("Malformed/past opening returns HTTP 400; no browser JavaScript errors.");
+  const oldCookie = (await context.cookies()).find(c => c.name === "juniper_session");
+  assert.ok(oldCookie?.httpOnly);
+  await page.getByRole("button", { name: "Sign out", exact: true }).click();
+  await page.getByRole("heading", { name: "Staff sign-in" }).waitFor();
+  assert.equal((await context.request.get(`${base}/api/salon`)).status(), 401);
+  const stale = await fetch(`${base}/api/salon`, { headers: { Cookie: `juniper_session=${oldCookie.value}` } });
+  assert.equal(stale.status, 401);
+  await page.locator('[name="username"]').selectOption("carla");
+  await page.locator('[name="password"]').fill(passwords.carla);
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await page.getByText("Signed in as Carla", { exact: true }).waitFor();
+  await page.waitForFunction(() => document.querySelector("#opening-list").textContent.includes("Jordan Lee accepted"));
+  await add("Haircut", "Rosa");
+  await card("Maya Rivera").waitFor();
+  await card("Maya Rivera").getByRole("button", { name: "Close opening", exact: true }).click();
+  await page.waitForFunction(() => document.querySelector("#active-count").textContent === "0 active");
+  checks.push("Logout revokes the old session; Carla signs in, sees shared outcomes, adds and closes an opening.");
   await writeFile(".local/browser-check-results.json", JSON.stringify({ checkedAt: new Date().toISOString(), workflowId, checks }, null, 2));
   console.log(`PASS: ${checks.length} browser/API checks\n${checks.join("\n")}`);
 } finally {

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Juniper Salon · Staff sign-in</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar"><a class="brand" href="/" aria-label="Juniper Salon home"><span class="brand-mark" aria-hidden="true">J</span><span>juniper <small>SALON</small></span></a><span class="demo-badge">SIMULATION · NO REAL TEXTS</span></header>
+    <main class="login-main">
+      <section class="panel login-panel" aria-labelledby="login-title">
+        <p class="eyebrow">Lena and Carla</p>
+        <h1 id="login-title">Staff sign-in</h1>
+        <p class="intro">Sign in to manage offers and see who holds each opening.</p>
+        <form id="login-form">
+          <label>Staff account<select name="username" autocomplete="username" required><option value="lena">Lena</option><option value="carla">Carla</option></select></label>
+          <label>Password<input name="password" type="password" autocomplete="current-password" required /></label>
+          <label class="show-password"><input type="checkbox" id="show-password" /> Show password</label>
+          <button class="button button-primary" type="submit">Sign in</button>
+          <p id="login-feedback" class="form-feedback" role="status" aria-live="polite"></p>
+        </form>
+        <p class="panel-copy login-help">Use your assigned staff password. If you need help signing in, contact the person who set up this local prototype.</p>
+      </section>
+    </main>
+    <script src="/login.js"></script>
+  </body>
+</html>

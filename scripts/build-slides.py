@@ -69,13 +69,13 @@ text(44, 447, "Staff can cancel an offer and try the next person, or close the o
 c.showPage()
 
 page(3, "Verification and prototype boundaries", "Checked behavior. Clearly stated limits.",
-     "14 automated tests passed, plus a real-browser walkthrough on desktop and mobile.")
+     "21 automated tests passed, plus nine browser checks covering access and the offer flow.")
 box(44, 215, 424, 264)
 text(63, 232, "What passed", 21, GREEN, 385, "Helvetica-Bold")
-text(63, 272, "<b>Replies:</b> acceptance, decline, questions, late replies and repeated clicks.<br/><br/><b>Queue:</b> matching, order, client limits, timeouts, cancellation and practical cutoff.<br/><br/><b>Recovery:</b> stop the worker, restart it, retain the original deadline, then advance once.", 16, INK, 382)
+text(63, 272, "<b>Staff access:</b> Lena and Carla sign in; signed-out requests are blocked; sign-out ends access.<br/><br/><b>Offers:</b> matching, ordering, replies, timeouts, cancellation and one holder.<br/><br/><b>Recovery:</b> worker restart preserves the original deadline and advances once.", 16, INK, 382)
 box(490, 215, 426, 264, "#fff5ef")
 text(509, 232, "What is simulated or excluded", 21, CORAL, 385, "Helvetica-Bold")
-text(509, 272, "<b>No real SMS.</b> Buttons simulate client responses.<br/><br/><b>No Square connection.</b> Front desk staff update it manually.<br/><br/><b>Sample waitlist; no staff login.</b> Real client intake, opt-out management and access controls are future work.", 16, INK, 381)
+text(509, 272, "<b>No real SMS.</b> Buttons simulate client responses.<br/><br/><b>No Square connection.</b> Front desk staff update it manually.<br/><br/><b>Sample waitlist.</b> Real client intake and live opt-out management are future work. Staff passwords are managed locally.", 16, INK, 381)
 c.showPage()
 
 page(4, "A practical next step", "Walk through a real cancellation together.",
@@ -85,7 +85,7 @@ text(64, 234, "A focused staff review", 21, GREEN, 490, "Helvetica-Bold")
 text(64, 277, "<b>1.</b> Pick an opening and explain who should get it first.<br/><br/><b>2.</b> Try a question, decline, acceptance and cancellation; check the visible result and Square handoff.<br/><br/><b>3.</b> Agree on practical cutoff guidance and what staff need before using it with real clients.", 17, INK, 486)
 box(594, 216, 322, 263)
 text(614, 234, "Then prepare a small pilot", 20, GREEN, 280, "Helvetica-Bold")
-text(614, 276, "Add staff sign-in, live waitlist consent/opt-out handling, and SMS with safe retries.<br/><br/>Track openings filled, staff time spent checking, and conflicting claims against today's process.", 16, INK, 280)
+text(614, 276, "Add live waitlist consent/opt-out handling and SMS with safe retries. Review staff account support before a pilot.<br/><br/>Measure openings filled, staff checking time and conflicting claims against today's process.", 16, INK, 280)
 c.showPage()
 c.save()
 print(OUT)

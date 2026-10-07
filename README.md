@@ -13,6 +13,12 @@ npm run dev:local
 
 Open [the local dashboard](http://localhost:3000). The [local Temporal Web UI](http://localhost:8233) shows the durable workflow and timer history. Stop the native app with `Ctrl+C`.
 
+### Staff sign-in
+
+On first launch, the API creates separate local accounts for **Lena** and **Carla**. Open `.local/staff-login.txt` on this computer for the generated passwords, then choose the account on the sign-in page. There is no public signup or shared default password. The login file and salted password hashes in `.local/staff-credentials.json` are excluded from Git; fresh checkouts generate their own credentials.
+
+The server protects the dashboard, staff data and all offer actions. Sign out using the control beside your name. Sessions expire after eight hours and are cleared when the API restarts; appointment history stays in Temporal. Keep the generated passwords with the intended staff members. For automated evaluation, both passwords can instead be supplied through `JUNIPER_LENA_PASSWORD` and `JUNIPER_CARLA_PASSWORD` environment variables (at least 12 characters each).
+
 Alternatively, with Docker Desktop running:
 
 ```bash
@@ -31,9 +37,9 @@ npm test
 npm run test:browser
 ```
 
-The Temporal test environment downloads its test server on first use. `npm test` starts isolated test servers and advances their clocks, so the 15-minute waits run quickly. The final suite has 14 passing tests, including worker restart and history replay.
+The Temporal test environment downloads its test server on first use. `npm test` starts isolated test servers and advances their clocks, so the 15-minute waits run quickly. The final suite has 21 passing tests: seven access checks plus the 14 offer-flow, validation, restart and replay checks.
 
-For `npm run test:browser`, first leave `npm run dev:local` running in another terminal. Browser checks use installed Microsoft Edge on Windows. On other platforms, run `npx playwright install chromium` once. The script uses port 3001 and an isolated workflow, exercises the visible controls, saves local screenshots, and terminates its test workflow. Seven browser/API check groups pass; the user's demo data is untouched.
+For `npm run test:browser`, first leave `npm run dev:local` running in another terminal. Browser checks use installed Microsoft Edge on Windows. On other platforms, run `npx playwright install chromium` once. The script uses port 3001, temporary in-memory test passwords and an isolated workflow, exercises the visible controls, saves local screenshots, and terminates its test workflow. Nine browser/API check groups pass, including both staff accounts and logout; the user's demo data and passwords are untouched.
 
 ## Prototype behavior
 
@@ -57,13 +63,15 @@ A salon workflow serializes opening, reply and cancellation decisions. Signals a
 
 ## Prototype limits
 
-- **No authentication:** “Staff view” describes the intended users, Lena and Carla. It does not enforce their identities. The API binds to loopback for local evaluation.
+- **Local staff accounts:** password authentication and server access checks are implemented for Lena and Carla. This prototype has no password-recovery service, multi-factor authentication or managed identity provider. The API binds to loopback for local evaluation. The separate Temporal development UI is a local evaluator tool, not the staff website.
 - **No real messaging or calendar integration:** every message is simulated; staff manually update Square.
 - **Sample data:** no waitlist intake/editing, real opt-out flow or contact-frequency policy. Opted-out seed entries are excluded from matching. Mobile number identifies the same sample client across requested services.
 - **Prototype scale:** one persistent salon workflow; no history rotation or production monitoring. Creating an opening is not deduplicated across lost HTTP responses, so staff should inspect the opening list before retrying an uncertain creation.
 - Tests demonstrate the listed scenarios, not production readiness or a completed staff usability study.
 
 ## Quick manual walkthrough
+
+Sign in as Lena or Carla using the local credentials described above.
 
 1. Add a future weekday Haircut with Jules at 3 PM. Leave enough time before the practical cutoff. Start the queue if it is not already running.
 2. On a fresh sample session, Maya receives the first offer. “Simulate a question” flags staff follow-up without booking. “Simulate decline” advances to Jordan.
@@ -80,6 +88,7 @@ If the site cannot be reached, keep the development terminal running, check its 
 - `output/presentation/juniper-salon-prototype.pdf` — four standalone slides for Lena
 - `src/workflows.ts` — durable offer queue, timeout, matching, replies, and cancellation behavior
 - `src/api.ts` — local API and Temporal client
+- `src/auth.ts` — local staff credentials, sessions and server access checks
 - `src/worker.ts` — Temporal worker
 - `src/types.ts` — shared data types
 - `public/` — staff dashboard and simulated client actions
@@ -95,3 +104,5 @@ If the site cannot be reached, keep the development terminal running, check its 
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/intro.html) informed the shared typed data model.
 - [GenderMag](https://gendermag.org/gendermag.php) informed a task-based usability review: clear next steps, visible status, explicit response choices, and a visible consequence for each action.
 - [Brandur's idempotency article](https://brandur.org/idempotency-keys) informed repeat-response guards and the future need for provider idempotency when adding real SMS. This prototype does not implement that article's Postgres architecture.
+
+PostHog tracking is deferred at Edward's request and has not been added to the application.
