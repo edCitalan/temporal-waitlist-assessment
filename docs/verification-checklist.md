@@ -25,7 +25,7 @@ Consent and matching are demonstrated with seeded clients. The prototype does no
 - [x] Implement sign-in for Lena and Carla and enforce access on the server for staff data and actions.
 - [x] Verify both staff accounts work; signed-out, invalid-account and direct API requests cannot access staff data or actions; signing out removes access.
 - [x] Rerun the existing behavior and browser checks after the access change, preserving the simulated offer flow.
-- [ ] Update README, slides and this checklist to reflect the verified access behavior, then push the revision.
+- [x] Update README, slides and this checklist to reflect the verified access behavior, then push the revision.
 
 ### Access evidence (October 7, 2026)
 
@@ -35,6 +35,9 @@ Consent and matching are demonstrated with seeded clients. The prototype does no
 - Cross-origin writes are blocked; repeated failed login attempts are throttled. Generated credentials persist as salted hashes; local login instructions are excluded from Git.
 - `npm run test:browser` passed nine check groups. The browser signs in as Lena, completes the offer scenarios, signs out, confirms the old cookie no longer works, then signs in as Carla, sees the shared outcomes, adds an opening and closes it.
 - Test credentials were generated in memory for the isolated browser API. No test password or real local credential is committed.
+- The actual local account was checked against the running app: generated credentials work, logout revokes access, and the before/after opening and offer records match. Existing demo data was preserved.
+- All four revised PDF pages and the desktop/mobile sign-in screens were rendered and visually checked. README and slides now describe the implemented staff access accurately.
+- Commit `7ba99b4` containing the access work, tests, instructions and revised slides was pushed successfully to `origin/main`. The current prototype checklist is complete; PostHog remains deferred below.
 
 ### Deferred by Edward
 
