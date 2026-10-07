@@ -1,12 +1,30 @@
 import { connect } from "node:net";
 import { spawn, spawnSync } from "node:child_process";
+import { mkdir } from "node:fs/promises";
+import path from "node:path";
 
-const compose = spawnSync("docker", ["compose", "up", "-d", "temporal"], {
-  stdio: "inherit",
-});
-if (compose.status !== 0) {
-  console.error("\nCould not start Temporal. Is Docker Desktop running?");
-  process.exit(compose.status ?? 1);
+let nativeEnvironment;
+if (process.argv.includes("--native")) {
+  const { TestWorkflowEnvironment } = await import("@temporalio/testing");
+  await mkdir(path.resolve(".local"), { recursive: true });
+  console.log("Starting a native Temporal dev server (first run may download it)...");
+  nativeEnvironment = await TestWorkflowEnvironment.createLocal({
+    server: {
+      ip: "127.0.0.1",
+      port: 7233,
+      uiPort: 8233,
+      dbFilename: path.resolve(".local/temporal.db"),
+    },
+  });
+} else {
+  const compose = spawnSync("docker", ["compose", "up", "-d", "temporal"], {
+    stdio: "inherit",
+    windowsHide: true,
+  });
+  if (compose.status !== 0) {
+    console.error("\nCould not start Docker. Start Docker Desktop, or use npm run dev:local.");
+    process.exit(compose.status ?? 1);
+  }
 }
 
 async function waitForPort(port, timeoutMs = 60_000) {
@@ -28,27 +46,35 @@ async function waitForPort(port, timeoutMs = 60_000) {
 
 await waitForPort(7233);
 const children = [
-  spawn("npm", ["run", "dev:worker"], { stdio: "inherit" }),
-  spawn("npm", ["run", "dev:api"], { stdio: "inherit" }),
-];
+  "src/worker.ts", "src/api.ts",
+].map((entrypoint) => spawn(process.execPath, ["--import", "tsx", entrypoint], {
+  stdio: "inherit",
+  windowsHide: true,
+  env: { ...process.env, TEMPORAL_ADDRESS: "127.0.0.1:7233" },
+}));
 let shuttingDown = false;
-function shutdown(exitCode = 0) {
+async function shutdown(exitCode = 0) {
   if (shuttingDown) return;
   shuttingDown = true;
   for (const child of children) child.kill("SIGTERM");
+  if (nativeEnvironment) await nativeEnvironment.teardown();
   process.exit(exitCode);
 }
-process.on("SIGINT", () => shutdown(0));
-process.on("SIGTERM", () => shutdown(0));
+process.on("SIGINT", () => { void shutdown(0); });
+process.on("SIGTERM", () => { void shutdown(0); });
 for (const child of children) {
+  child.once("error", (error) => {
+    console.error(error);
+    void shutdown(1);
+  });
   child.once("exit", (code, signal) => {
     if (!shuttingDown) {
       console.error(`A development process stopped (${signal ?? code}).`);
-      shutdown(code ?? 1);
+      void shutdown(code ?? 1);
     }
   });
 }
-console.log("\nStarter is launching:");
+console.log("\nJuniper Salon is launching:");
 console.log("  App:         http://localhost:3000");
 console.log("  Temporal UI: http://localhost:8233\n");
 

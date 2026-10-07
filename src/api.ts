@@ -21,7 +21,12 @@ let clientPromise: Promise<Client> | undefined;
 function getClient(): Promise<Client> {
   clientPromise ??= Connection.connect({
     address: process.env.TEMPORAL_ADDRESS ?? "localhost:7233",
-  }).then((connection) => new Client({ connection, namespace: "default" }));
+  })
+    .then((connection) => new Client({ connection, namespace: "default" }))
+    .catch((error) => {
+      clientPromise = undefined;
+      throw error;
+    });
   return clientPromise;
 }
 

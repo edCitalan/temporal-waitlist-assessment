@@ -13,6 +13,16 @@ npm run dev
 
 Open <http://localhost:3000>. The local Temporal Web UI is at <http://localhost:8233>. Stop the app with `Ctrl+C`; stop the Temporal container with `npm run stop`.
 
+If Docker Desktop is unavailable, use the native local server instead:
+
+```bash
+npm run dev:local
+```
+
+This starts a real Temporal dev server, worker, API, and Temporal UI at the same addresses. The first run downloads the Temporal CLI. Workflow history persists in `.local/temporal.db`, which Git ignores. `Ctrl+C` stops these native processes. Use one startup method at a time.
+
+The workflow compiler dependency is pinned to `@swc/core` 1.15.11 because the newer native carrier could not load under this Windows machine's cache permissions. Both startup methods launch Node directly so they work without Unix-specific `npm` subprocess handling.
+
 Useful checks:
 
 ```bash
