@@ -2,12 +2,43 @@
 
 Only mark an item complete after its stated behavior is observed. Edward authorized completing the whole list with behavior tests and checkpoint updates on October 7, 2026.
 
+## Latest 12-rule specification: verified October 7, 2026
+
+The missing configurable reply window is implemented. Type checking passed, all 26 automated tests passed, and all 14 browser/API check groups passed. Existing local Temporal history replayed successfully, and the restarted app preserved the demo records.
+
+| Complete | Requirement | Evidence |
+| --- | --- | --- |
+| [x] | 1. Staff enter service, stylist, date/time and response window. | Browser sets seven minutes and confirms the resulting workflow/client deadline. Automated tests cover five, fifteen and thirty minutes, plus invalid input. |
+| [x] | 2. One oldest eligible opted-in client at a time per opening. | Matching test covers service, stylist, local availability, consent and oldest request. |
+| [x] | 3. Exact appointment details, deadline and clear YES/NO options. | Outgoing offer says YES/NO; the client page shows service, stylist, appointment and deadline with accept/decline controls. Browser and visual checks passed. |
+| [x] | 4. Clear acceptance reserves, stops offers and tells staff to update Square. | Workflow and browser checks identify Jordan as the holder and show the Square reminder. |
+| [x] | 5. Decline or timeout advances automatically. | Browser decline advances to Jordan; accelerated Temporal tests verify default and custom deadlines. |
+| [x] | 6. Questions flag staff follow-up without reserving. | A client types a question; staff see it with no holder. The offer stays open until its original deadline or staff cancellation. |
+| [x] | 7. One active offer per person per service. | Same-service conflicts are blocked; Sam's separate Color and Highlights requests can receive offers concurrently. |
+| [x] | 8. Earlier appointment first, then creation order. | Workflow ordering test covers both cases for queued openings. |
+| [x] | 9. Cancelled offers cannot accept; continue only if still open. | Cancellation tests cover try-next, close-opening, stale acceptance and repeated cancellation. Client page removes response controls. |
+| [x] | 10. Opted-out clients are never contacted. | Matching excludes Avery, the opted-out seed client. |
+| [x] | 11. First valid acceptance wins; losing replies get taken; holder visible. | Concurrent/repeated and late-reply tests preserve one holder; the losing client's page shows already taken. |
+| [x] | 12. Every simulated message is clearly labeled. | Workflow message assertions and browser/visual review confirm simulation labels on staff and client views. |
+
+### Deliverables and final publication
+
+- [x] Working local app with meaningful Temporal workflows and timers; protected Lena/Carla dashboard and personal client offer pages.
+- [x] README with startup, local staff login, client-reply and timeout demonstrations, assumptions and prototype limits.
+- [x] Six fictional clients / seven service requests with fake contacts, including an opted-out client.
+- [x] Passing tests, including staff access, the twelve rules, client-link isolation, restart and replay.
+- [x] Staff and client desktop/mobile screenshots visually inspected; no clipping or horizontal overflow observed.
+- [x] Update and visually review all four PDF slides with the client experience, configurable reply window and current test counts.
+- [ ] Push this revision to the public repository.
+
+No SMS, Square, Google Sheets or PostHog connection is implemented. The front desk performs the real calendar update manually. Authenticated staff see the offer list; clients see only the individual offer authorized by their personal link. These are assistant-run checks, not a claim that Lena or Edward performed a final review.
+
 ## Lena's requirements: current status
 
-The offer flow and staff access are now implemented and tested. The earlier completion statement omitted access control; that gap is fixed and verified below. Historical test evidence is retained separately.
+The offer flow, staff access and separate client offer page are implemented and tested. Historical evidence for earlier versions is retained below; the latest client-page verification appears first.
 
 - [x] Match opted-in sample clients by service, availability and stylist preference; oldest eligible request first.
-- [x] Offer to one client at a time per opening, wait up to 15 minutes, and automatically advance after decline or timeout.
+- [x] Offer to one client at a time per opening, wait for the staff-selected reply window (default 15 minutes), and automatically advance after decline or timeout.
 - [x] Show exact service, stylist, date/time and response deadline, with clear accept and decline controls.
 - [x] Reserve for the first valid acceptance; identify the holder and reject late or losing replies clearly.
 - [x] Flag questions for staff follow-up without reserving the opening or extending its deadline.
@@ -17,6 +48,19 @@ The offer flow and staff access are now implemented and tested. The earlier comp
 - [x] Keep Square as the real calendar and show the front-desk reminder after acceptance.
 - [x] Clearly label every simulated message; send no real texts.
 - [x] Restrict starting offers and viewing status to Lena and Carla through separate local staff accounts and server access checks.
+- [x] Provide a separate client page for each personal offer, with appointment details, accept/decline choices and a question form.
+
+## Client page verification
+
+- [x] Client link works without a staff login and exposes only that offer. Tampered links and requests without a token are rejected.
+- [x] Client question appears on the staff dashboard without reserving; client decline advances to the next eligible client.
+- [x] Client acceptance confirms on the client page and identifies the same holder on the staff dashboard. A losing client's old link shows taken and cannot claim the slot.
+- [x] Staff cancellation updates the client page and removes its response controls. Expiry, acceptance, follow-up, closure and competing-holder views are covered in unit tests.
+- [x] `npm run typecheck` passes; all 26 automated tests and 14 browser/API check groups pass.
+- [x] Refresh the presentation and instructions and visually inspect the client layouts.
+- [ ] Push the client-page and configurable-response revision.
+
+Browser verification uses separate staff and client contexts. The client has no staff cookie and cannot access `/api/salon`. The client replies through its own page; tests observe the result on the staff dashboard. Link signatures bind to one workflow run and offer. Client views exclude mobile numbers, other recipients, waitlist data and staff notes. No real messages were sent.
 
 Consent and matching are demonstrated with seeded clients. The prototype does not implement Google Sheet intake/editing or a live opt-out channel. Lena described that existing process; the checklist does not claim it was replaced. Business results (fewer gaps and less staff checking) still need observation in a pilot.
 
@@ -25,7 +69,7 @@ Consent and matching are demonstrated with seeded clients. The prototype does no
 - [x] Implement sign-in for Lena and Carla and enforce access on the server for staff data and actions.
 - [x] Verify both staff accounts work; signed-out, invalid-account and direct API requests cannot access staff data or actions; signing out removes access.
 - [x] Rerun the existing behavior and browser checks after the access change, preserving the simulated offer flow.
-- [x] Update README, slides and this checklist to reflect the verified access behavior, then push the revision.
+- [x] Update README, slides and this checklist to reflect the verified access behavior, then push the revision (prior access revision, commit `3b1a639`).
 
 ### Access evidence (October 7, 2026)
 
@@ -35,9 +79,6 @@ Consent and matching are demonstrated with seeded clients. The prototype does no
 - Cross-origin writes are blocked; repeated failed login attempts are throttled. Generated credentials persist as salted hashes; local login instructions are excluded from Git.
 - `npm run test:browser` passed nine check groups. The browser signs in as Lena, completes the offer scenarios, signs out, confirms the old cookie no longer works, then signs in as Carla, sees the shared outcomes, adds an opening and closes it.
 - Test credentials were generated in memory for the isolated browser API. No test password or real local credential is committed.
-- The actual local account was checked against the running app: generated credentials work, logout revokes access, and the before/after opening and offer records match. Existing demo data was preserved.
-- All four revised PDF pages and the desktop/mobile sign-in screens were rendered and visually checked. README and slides now describe the implemented staff access accurately.
-- Commit `7ba99b4` containing the access work, tests, instructions and revised slides was pushed successfully to `origin/main`. The current prototype checklist is complete; PostHog remains deferred below.
 
 ### Deferred by Edward
 

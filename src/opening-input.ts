@@ -12,6 +12,10 @@ export function normalizeOpening(body: unknown, now = Date.now()): OpeningInput 
     throw new Error("Choose a service, Jules or Rosa, a future appointment, and a length from 15 to 480 minutes.");
   }
   const startsAt = new Date(value.startsAt).toISOString();
+  const responseMinutes = value.responseMinutes ?? 15;
+  if (!Number.isSafeInteger(responseMinutes) || responseMinutes < 1 || responseMinutes > 1440) {
+    throw new Error("Choose a reply window from 1 to 1440 whole minutes.");
+  }
   const offerUntil = value.offerUntil || startsAt;
   if (typeof offerUntil !== "string" || !/Z$|[+-]\d{2}:\d{2}$/.test(offerUntil) ||
       !Number.isFinite(Date.parse(offerUntil)) || Date.parse(offerUntil) <= now || Date.parse(offerUntil) > Date.parse(startsAt)) {
@@ -26,7 +30,7 @@ export function normalizeOpening(body: unknown, now = Date.now()): OpeningInput 
   }
   const part = (kind: string) => parts.find((p) => p.type === kind)!.value;
   return {
-    service: value.service!, stylist: value.stylist!, startsAt, durationMinutes: value.durationMinutes,
+    service: value.service!, stylist: value.stylist!, startsAt, durationMinutes: value.durationMinutes, responseMinutes,
     offerUntil: new Date(offerUntil).toISOString(), timeZone,
     localDay: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(part("weekday")),
     localHour: Number(part("hour")),

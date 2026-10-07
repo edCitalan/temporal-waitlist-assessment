@@ -53,11 +53,11 @@ text(62, 445, "Agreed approach: oldest eligible request first, one client at a t
 c.showPage()
 
 page(2, "How the prototype behaves", "Offer. Wait. Resolve. Keep staff informed.",
-     "Each offer names the exact service, stylist, appointment time, and response deadline.")
+     "Staff manage openings. Clients use a personal offer page with exact details and a deadline.")
 steps = [
-    ("1  Add an opening", "Staff enter the details and the last practical response time, allowing for travel and service length."),
+    ("1  Add an opening", "Staff enter the appointment details, reply window (default 15 minutes), and any practical cutoff."),
     ("2  Find a match", "Match service, availability and stylist. Exclude opt-outs. Offer the oldest eligible request first."),
-    ("3  Wait up to 15 min", "Decline or timeout moves to the next client. A question flags staff follow-up without reserving."),
+    ("3  Client responds", "Clients accept, decline or ask a question on their offer page. Decline or the reply deadline moves to the next client."),
     ("4  Confirm one holder", "A clear, valid acceptance reserves the slot here. Late replies get an explanation. Staff update Square."),
 ]
 for i, (title, body) in enumerate(steps):
@@ -69,13 +69,13 @@ text(44, 447, "Staff can cancel an offer and try the next person, or close the o
 c.showPage()
 
 page(3, "Verification and prototype boundaries", "Checked behavior. Clearly stated limits.",
-     "21 automated tests passed, plus nine browser checks covering access and the offer flow.")
+     "26 automated tests passed, plus 14 browser checks across staff and client pages.")
 box(44, 215, 424, 264)
 text(63, 232, "What passed", 21, GREEN, 385, "Helvetica-Bold")
-text(63, 272, "<b>Staff access:</b> Lena and Carla sign in; signed-out requests are blocked; sign-out ends access.<br/><br/><b>Offers:</b> matching, ordering, replies, timeouts, cancellation and one holder.<br/><br/><b>Recovery:</b> worker restart preserves the original deadline and advances once.", 16, INK, 382)
+text(63, 272, "<b>Staff:</b> Lena and Carla sign in to manage offers and see the holder.<br/><br/><b>Clients:</b> personal offer links allow replies without staff access; both screens show the outcome.<br/><br/><b>Reliability:</b> matching, timeouts, cancellation, one holder and recovery after worker restart.", 16, INK, 382)
 box(490, 215, 426, 264, "#fff5ef")
 text(509, 232, "What is simulated or excluded", 21, CORAL, 385, "Helvetica-Bold")
-text(509, 272, "<b>No real SMS.</b> Buttons simulate client responses.<br/><br/><b>No Square connection.</b> Front desk staff update it manually.<br/><br/><b>Sample waitlist.</b> Real client intake and live opt-out management are future work. Staff passwords are managed locally.", 16, INK, 381)
+text(509, 272, "<b>No real SMS.</b> Open the client's personal link from the staff demo. The client page is clearly simulated.<br/><br/><b>No Square connection.</b> Staff update it manually.<br/><br/><b>Sample waitlist.</b> Live intake and opt-out management remain future work. Staff passwords are local.", 16, INK, 381)
 c.showPage()
 
 page(4, "A practical next step", "Walk through a real cancellation together.",

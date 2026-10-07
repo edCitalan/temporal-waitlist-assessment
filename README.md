@@ -1,6 +1,6 @@
 # Juniper Salon earlier-appointment offers
 
-A local prototype for managing cancellations at Juniper Salon. Staff add one or more openings, then Temporal offers each opening to the oldest eligible opted-in client, one client at a time. A clear acceptance reserves the opening in this prototype; front-desk staff still update Square.
+A local prototype with two separate experiences: a protected dashboard for Lena and Carla, and a personal offer page for each client. Staff add openings, then Temporal offers each opening to the oldest eligible opted-in client, one client at a time. Clients accept, decline or ask a question on their own page. A clear acceptance reserves the opening in this prototype; front-desk staff still update Square.
 
 ## Run locally
 
@@ -37,34 +37,40 @@ npm test
 npm run test:browser
 ```
 
-The Temporal test environment downloads its test server on first use. `npm test` starts isolated test servers and advances their clocks, so the 15-minute waits run quickly. The final suite has 21 passing tests: seven access checks plus the 14 offer-flow, validation, restart and replay checks.
+The Temporal test environment downloads its test server on first use. `npm test` starts isolated test servers and advances their clocks, so waits run quickly. The suite has 26 passing tests: seven staff access checks, four client-link/view checks, and 15 offer-flow, validation, restart and replay checks. Response windows of 5, 15 and 30 minutes are covered.
 
-For `npm run test:browser`, first leave `npm run dev:local` running in another terminal. Browser checks use installed Microsoft Edge on Windows. On other platforms, run `npx playwright install chromium` once. The script uses port 3001, temporary in-memory test passwords and an isolated workflow, exercises the visible controls, saves local screenshots, and terminates its test workflow. Nine browser/API check groups pass, including both staff accounts and logout; the user's demo data and passwords are untouched.
+For `npm run test:browser`, first leave `npm run dev:local` running in another terminal. Browser checks use installed Microsoft Edge on Windows. On other platforms, run `npx playwright install chromium` once. The script uses port 3001, temporary in-memory test passwords and an isolated workflow, exercises the visible controls, saves local screenshots, and terminates its test workflow. Fourteen browser/API check groups pass, including a staff-selected 7-minute window and client pages in a separate browser context without staff cookies. The user's demo data and passwords are untouched.
+
+### Separate client offer page
+
+Every staff offer card has **Open client offer page**. This is the personal link that a future SMS integration would deliver; no SMS is sent in the prototype. It opens `/offer#...` in a new tab, with the client's service, stylist, appointment, duration and response deadline. The client can accept, decline or type a question without a staff account. The dashboard reflects the response. Cancelled, expired and taken offers show an explanation and remove response controls.
+
+The signed link is access to one specific offer and workflow run. The client API ignores any caller-supplied offer ID and exposes no waitlist, other recipients, mobile numbers or staff notes. Tokens travel in an authorization header from the URL fragment. The signing secret persists in ignored `.local/client-link-secret.txt` so API restarts preserve links. Treat these personal links like private invitations; do not post them in the public repository. Staff-only simulation buttons remain available as evaluation shortcuts.
 
 ## Prototype behavior
 
 - Matches service, availability, and stylist preference; opted-out clients are excluded.
 - Orders openings by appointment time, then creation time. Within each opening, the oldest matching waitlist request gets the first offer.
-- Creates one simulated offer at a time for an opening, with a durable Temporal wait of up to 15 minutes. Declines and timeouts move to the next eligible client.
-- Simulated accept, decline, question, and staff-cancellation controls let evaluators demonstrate the flow locally.
+- Staff choose each opening's reply window in whole minutes (default 15). Each client receives that window, bounded by the visible practical cutoff. Temporal keeps the deadline durably; declines and timeouts move to the next eligible client.
+- Clients have their own offer page with accept, decline and question controls. Staff have cancellation/status controls and additional simulation shortcuts for local evaluation.
 - A question requests staff follow-up and does not reserve the opening. A clear acceptance marks the opening booked and identifies the client.
 - Each client can have at most one active offer per service. Separate service requests can be offered independently.
 - Late replies receive an explicit expired, taken, or unavailable outcome. Repeated acceptance keeps the same holder; retrying an old cancellation cannot cancel the next person's offer.
 - Staff may cancel and try the next client, or close the opening. An optional last practical response time shortens the reply window and stops outreach; otherwise the appointment start is the cutoff.
-- Every simulated message is labeled. No SMS is sent, and Square is not connected.
+- Every simulated message is labeled. No SMS is sent; neither Square nor Google Sheets is connected.
 
 The sample waitlist is seeded in `src/legacy-workflow.ts` and shared by the new workflow. Availability uses simple categories in the time zone displayed beside the form (the browser's time zone). The API derives local calendar fields; it does not trust browser-supplied match fields. Travel time and service practicality remain staff judgment, expressed through the cutoff.
 
 ## What Temporal does
 
-A salon workflow serializes opening, reply and cancellation decisions. Signals add openings and cancel offers; a synchronous Workflow Update processes a reply and returns its outcome; a Query reads the dashboard snapshot. The first valid acceptance changes state before another reply can claim it. One durable timer watches the next reply deadline or staff cutoff. Absolute deadlines survive worker restart rather than starting a new 15-minute window. No real-world message activity runs because all messages are simulated.
+A salon workflow serializes opening, reply and cancellation decisions. Signals add openings and cancel offers; a synchronous Workflow Update processes a reply and returns its outcome; a Query reads the dashboard snapshot. The first valid acceptance changes state before another reply can claim it. One durable timer watches the next reply deadline or staff cutoff. Absolute deadlines survive worker restart without restarting the reply window. No real-world message activity runs because all messages are simulated.
 
 `src/legacy-workflow.ts` retains replay compatibility for the earlier local prototype. Its `upgradePrototype` signal continues as a new run with the same snapshot and original deadlines. The existing assessment session was migrated and checked without clearing records. Fresh checkouts start the current workflow automatically.
 
 ## Prototype limits
 
 - **Local staff accounts:** password authentication and server access checks are implemented for Lena and Carla. This prototype has no password-recovery service, multi-factor authentication or managed identity provider. The API binds to loopback for local evaluation. The separate Temporal development UI is a local evaluator tool, not the staff website.
-- **No real messaging or calendar integration:** every message is simulated; staff manually update Square.
+- **No real messaging or calendar integration:** offer links are opened manually from the staff demo; every message is simulated and staff manually update Square.
 - **Sample data:** no waitlist intake/editing, real opt-out flow or contact-frequency policy. Opted-out seed entries are excluded from matching. Mobile number identifies the same sample client across requested services.
 - **Prototype scale:** one persistent salon workflow; no history rotation or production monitoring. Creating an opening is not deduplicated across lost HTTP responses, so staff should inspect the opening list before retrying an uncertain creation.
 - Tests demonstrate the listed scenarios, not production readiness or a completed staff usability study.
@@ -73,15 +79,23 @@ A salon workflow serializes opening, reply and cancellation decisions. Signals a
 
 Sign in as Lena or Carla using the local credentials described above.
 
-1. Add a future weekday Haircut with Jules at 3 PM. Leave enough time before the practical cutoff. Start the queue if it is not already running.
-2. On a fresh sample session, Maya receives the first offer. “Simulate a question” flags staff follow-up without booking. “Simulate decline” advances to Jordan.
-3. Accept Jordan's offer. The opening identifies Jordan and reminds the front desk to update Square. Try Maya's late acceptance; the message says the appointment was taken.
+1. Add a future weekday Haircut with Jules at 3 PM. Choose the reply window (15 minutes by default), leaving enough time before the practical cutoff. Start the queue if it is not already running.
+2. On a fresh sample session, Maya receives the first offer. Click **Open client offer page**. Send a question there and observe staff follow-up on the dashboard, without booking. Click **Decline** on Maya's page; the staff dashboard advances to Jordan.
+3. Open Jordan's client link and click **Accept this appointment**. Jordan's page confirms and the staff dashboard identifies Jordan with the Square reminder. Maya's old link shows the appointment was taken and cannot reserve it.
 4. Add a weekday-afternoon Highlights opening. Cancel Sam's offer and try next; the list is exhausted. Use another Color opening to demonstrate “Close opening.”
-5. Observe a 15-minute timeout, or use `npm test` for the accelerated clock proof. Restarting the app retains earlier records; it does not reset the demo.
+5. To demonstrate no response, choose a 1-minute reply window for a new opening and leave its offer unanswered. After the deadline, the next eligible client receives an offer. Use `npm test` for accelerated checks of longer windows. Restarting the app retains earlier records; it does not reset the demo.
 
 For an independent empty demonstration session, stop the app and set a new `SALON_WORKFLOW_ID` environment variable before starting it again. Existing workflow history remains in Temporal. The automated browser script does this isolation itself.
 
 If the site cannot be reached, keep the development terminal running, check its startup output, and use the native option when Docker is unavailable. See [verification checklist](docs/verification-checklist.md) for expected results and evidence.
+
+## Assumptions used
+
+- The seed contains six fictional people with fake 555-01xx contacts and seven service requests; Sam separately requested Color and Highlights. A normalized mobile identifies the person across requests.
+- Reply windows are whole minutes from 1 to 1440 for this prototype, defaulting to Lena's suggested 15. Staff can choose an earlier practical cutoff; otherwise outreach stops at appointment start. There is no fixed travel-time buffer.
+- A question keeps the current offer open without a reservation until its original deadline, unless staff cancel it sooner. It does not extend the deadline.
+- Priority applies to openings awaiting dispatch. Starting the queue after adding simultaneous openings demonstrates earlier appointment time, then creation order. Already-issued offers are not withdrawn when staff add another opening.
+- A fulfilled request is excluded from later offers for that same service. Other separately requested services remain eligible. A client with a cancelled or expired offer cannot win with a stale reply.
 
 ## Project map
 
@@ -89,9 +103,10 @@ If the site cannot be reached, keep the development terminal running, check its 
 - `src/workflows.ts` — durable offer queue, timeout, matching, replies, and cancellation behavior
 - `src/api.ts` — local API and Temporal client
 - `src/auth.ts` — local staff credentials, sessions and server access checks
+- `src/client-offer.ts` — signed personal offer links and the limited client data view
 - `src/worker.ts` — Temporal worker
 - `src/types.ts` — shared data types
-- `public/` — staff dashboard and simulated client actions
+- `public/` — staff dashboard/sign-in and separate client offer page
 - `tests/` — behavior, validation, restart and replay tests
 - `scripts/browser-check.mjs` — isolated browser walkthrough
 - `scripts/build-slides.py` — reproducible PDF builder (optional Python + ReportLab)

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="referrer" content="no-referrer" /><title>Juniper Salon · Your appointment offer</title><link rel="stylesheet" href="/styles.css" /></head>
+<body>
+  <header class="topbar"><span class="brand"><span class="brand-mark" aria-hidden="true">J</span><span>juniper <small>SALON</small></span></span><span class="demo-badge">SIMULATION · NO REAL TEXTS</span></header>
+  <main class="client-main">
+    <section class="panel client-panel">
+      <p class="eyebrow">Your earlier appointment offer</p>
+      <h1>A little sooner,<br /><em>just for you.</em></h1>
+      <p class="intro" id="client-greeting">Loading your offer…</p>
+      <p class="client-simulation">This is a simulated appointment offer for the prototype. No real text was sent or appointment booked in Square.</p>
+      <div id="client-error" role="alert" hidden></div>
+      <div id="client-offer" hidden>
+        <dl class="client-details">
+          <div><dt>Service</dt><dd id="client-service"></dd></div>
+          <div><dt>Stylist</dt><dd id="client-stylist"></dd></div>
+          <div class="span-two"><dt>Appointment</dt><dd id="client-time"></dd></div>
+          <div><dt>Length</dt><dd id="client-duration"></dd></div>
+          <div class="span-two"><dt>Reply by</dt><dd id="client-deadline"></dd></div>
+        </dl>
+        <div id="client-status" class="client-status" role="status" aria-live="polite"></div>
+        <div id="client-actions">
+          <p class="panel-copy">Accept only if you can attend this exact time and service. Asking a question does not reserve the appointment.</p>
+          <div class="client-choice-row"><button id="client-accept" class="button button-accept" type="button">Accept this appointment</button><button id="client-decline" class="button button-outline" type="button">Decline</button></div>
+          <form id="client-question-form">
+            <label>Your question<textarea id="client-question" maxlength="500" rows="3" placeholder="What would you like to ask?" required></textarea></label>
+            <button class="text-action" type="submit">Send question to staff</button>
+          </form>
+        </div>
+        <p class="form-feedback" id="client-feedback" role="status"></p>
+      </div>
+    </section>
+  </main>
+  <script src="/client-offer.js"></script>
+</body>
+</html>

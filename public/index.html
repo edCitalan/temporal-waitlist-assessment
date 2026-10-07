@@ -57,6 +57,10 @@
                   <input name="startsAt" id="starts-at" type="datetime-local" required />
                   <span class="hint" id="timezone-hint"></span>
                 </label>
+                <label class="span-two">Reply window (minutes)
+                  <input name="responseMinutes" type="number" min="1" max="1440" step="1" value="15" required />
+                  <span class="hint">Each client gets this long to reply. Default: 15 minutes. The practical cutoff below can end an offer sooner.</span>
+                </label>
                 <label class="span-two">Last practical response time (optional)
                   <input name="offerUntil" type="datetime-local" />
                   <span class="hint">Allow time for travel and the service. Offers stop at this time; if blank, they stop at the appointment start.</span>
@@ -77,7 +81,7 @@
 
           <section class="panel offers-panel" aria-labelledby="offers-title">
             <div class="panel-heading">
-              <div><p class="eyebrow">One at a time · 15-minute reply window</p><h2 id="offers-title">Offers in progress</h2></div>
+              <div><p class="eyebrow">One at a time · clear reply deadlines</p><h2 id="offers-title">Offers in progress</h2></div>
               <span class="count" id="active-count">0 active</span>
             </div>
             <div id="active-offers" class="offer-list" aria-live="polite">
@@ -114,7 +118,7 @@
             <h2 id="how-title">A clear next step,<br />every time.</h2>
             <ol class="steps">
               <li><span>1</span><div><strong>Offer</strong><p>The oldest matching client gets the exact time and service.</p></div></li>
-              <li><span>2</span><div><strong>Wait</strong><p>15 minutes for a clear yes or no. Questions go to staff.</p></div></li>
+              <li><span>2</span><div><strong>Wait</strong><p>Until the deadline you set for a clear yes or no. Questions go to staff.</p></div></li>
               <li><span>3</span><div><strong>Move on</strong><p>Decline or no reply? Contact the next eligible client.</p></div></li>
             </ol>
             <div class="square-note"><span class="square-mark">S</span><p><strong>Square stays the source of truth.</strong><br />Front desk staff update it after an acceptance.</p></div>

@@ -9,14 +9,17 @@ import type {
   ClientReply,
   OpeningInput,
   StaffCancellation,
+  SalonSnapshot,
 } from "./types";
 import { juniperSalonWorkflow, respondToOffer, salonTaskQueue } from "./workflows";
 import { normalizeOpening } from "./opening-input";
 import { createStaffAuth, loadStaffCredentials } from "./auth";
+import { createOfferLinks, loadOfferLinkSecret, projectClientOffer } from "./client-offer";
 
 const app = express();
 app.use(express.json({ limit: "16kb" }));
 const auth = createStaffAuth(loadStaffCredentials());
+const offerLinks = createOfferLinks(loadOfferLinkSecret());
 app.use("/api", auth.sameOrigin);
 app.post("/api/auth/login", auth.login);
 app.post("/api/auth/logout", auth.logout);
@@ -27,6 +30,41 @@ app.get("/login", (request, response) => {
 });
 app.get("/styles.css", (_request, response) => response.sendFile(path.join(process.cwd(), "public/styles.css")));
 app.get("/login.js", (_request, response) => response.sendFile(path.join(process.cwd(), "public/login.js")));
+app.get("/offer", (_request, response) => {
+  response.set({ "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" });
+  response.sendFile(path.join(process.cwd(), "public/client-offer.html"));
+});
+app.get("/client-offer.js", (_request, response) => response.sendFile(path.join(process.cwd(), "public/client-offer.js")));
+app.use("/api/client/offer", async (request, response, next) => {
+  response.set({ "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" });
+  const token = request.get("authorization")?.replace(/^Bearer /, "") ?? "";
+  const claims = offerLinks.verify(token);
+  if (!claims || claims.workflowId !== workflowId) {
+    response.status(401).json({ error: "This offer link is invalid. Please ask the salon for your offer link." });
+    return;
+  }
+  const client = await getClient();
+  response.locals.clientHandle = client.workflow.getHandle(claims.workflowId, claims.runId);
+  response.locals.clientOfferId = claims.offerId;
+  next();
+});
+app.get("/api/client/offer", async (_request, response) => {
+  const snapshot: SalonSnapshot = await response.locals.clientHandle.query("getSalonSnapshot");
+  const offer = projectClientOffer(snapshot, response.locals.clientOfferId);
+  if (!offer) { response.status(404).json({ error: "This offer is no longer available. Please contact the salon." }); return; }
+  response.json(offer);
+});
+app.post("/api/client/offer/reply", async (request, response) => {
+  const kind = request.body?.kind;
+  if (!["accept", "decline", "question"].includes(kind)) {
+    response.status(400).json({ error: "Choose accept, decline, or ask a question." }); return;
+  }
+  const result = await response.locals.clientHandle.executeUpdate(respondToOffer, { args: [{
+    offerId: response.locals.clientOfferId, kind,
+    message: typeof request.body.message === "string" ? request.body.message.slice(0, 500) : undefined,
+  }] });
+  response.json({ code: result.code });
+});
 app.use(auth.requireStaff);
 app.get("/api/auth/session", (_request, response) => response.json({ staff: response.locals.staff }));
 app.use(express.static(path.join(process.cwd(), "public")));
@@ -61,8 +99,11 @@ async function getSalonHandle() {
 
 app.get("/api/salon", async (_request, response) => {
   const handle = await getSalonHandle();
-  const snapshot = await handle.query("getSalonSnapshot");
-  response.json(snapshot);
+  const snapshot = await handle.query<SalonSnapshot>("getSalonSnapshot");
+  const { runId } = await handle.describe();
+  response.json({ ...snapshot, offers: snapshot.offers.map(offer => ({ ...offer,
+    clientUrl: `/offer#${offerLinks.issue({ workflowId, runId, offerId: offer.id })}`,
+  })) });
 });
 
 app.post("/api/openings", async (request, response) => {

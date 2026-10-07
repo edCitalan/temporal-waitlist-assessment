@@ -90,6 +90,7 @@ function renderOfferCard(offer, opening) {
       <div class="offer-card-head"><span class="simulated-label">SIMULATED MESSAGE</span><span class="status-pill status-${escapeHtml(offer.status)}">${escapeHtml(statusLabel(offer.status))}</span></div>
       <div class="offer-person"><span class="avatar">${escapeHtml(offer.clientName.split(" ").map((part) => part[0]).join(""))}</span><div><strong>${escapeHtml(offer.clientName)}</strong><span>${escapeHtml(detail)}</span></div></div>
       <p class="message-preview">${escapeHtml(offer.message)}</p>
+      <p class="client-link-row"><a class="button button-secondary" href="${escapeHtml(offer.clientUrl)}" target="_blank" rel="noopener noreferrer">Open client offer page ↗</a><small>Personal offer link · simulated delivery</small></p>
       ${offer.lastReply ? `<p class="reply-outcome">${escapeHtml(offer.lastReply.message)}</p>` : ""}
       ${active ? `
         <p class="deadline">Reply window ends ${formatDateTime(offer.deadlineAt)}. The opening is not reserved until a clear acceptance.</p>
@@ -98,7 +99,7 @@ function renderOfferCard(offer, opening) {
           <button class="button button-outline" data-action="reply" data-kind="decline" data-id="${escapeHtml(offer.id)}">Simulate decline</button>
           <button class="text-action" data-action="reply" data-kind="question" data-id="${escapeHtml(offer.id)}">Simulate a question</button>
         </div>
-        ${offer.status === "needs-follow-up" ? '<p class="follow-up-note">Staff should follow up. This does not reserve the opening; the 15-minute window continues.</p>' : ""}
+        ${offer.status === "needs-follow-up" ? '<p class="follow-up-note">Staff should follow up. This does not reserve the opening; the original reply deadline still applies.</p>' : ""}
         <div class="staff-actions">
           <button class="text-action" data-action="cancel" data-id="${escapeHtml(offer.id)}" data-still-open="true" data-opening="${escapeHtml(offer.openingId)}">Cancel offer · try next</button>
           <button class="text-action danger" data-action="cancel" data-id="${escapeHtml(offer.id)}" data-still-open="false" data-opening="${escapeHtml(offer.openingId)}">Close opening</button>
@@ -160,6 +161,7 @@ document.querySelector("#opening-form").addEventListener("submit", async (event)
         timeZone,
         offerUntil: values.get("offerUntil") ? new Date(values.get("offerUntil")).toISOString() : undefined,
         durationMinutes: Number(values.get("durationMinutes")),
+        responseMinutes: Number(values.get("responseMinutes")),
       }),
     });
     formFeedback.textContent = snapshot?.offersRunning ? "Opening added. The offer queue is running automatically." : "Opening added. Add any other cancellations, then start the offer queue.";
@@ -172,7 +174,7 @@ document.querySelector("#opening-form").addEventListener("submit", async (event)
 startOffersButton.addEventListener("click", async () => {
   try {
     await api("/api/offers/start", { method: "POST", body: "{}" });
-    formFeedback.textContent = "Offer queue started. Temporal will keep the 15-minute wait and move to the next eligible client.";
+    formFeedback.textContent = "Offer queue started. Temporal will keep each reply deadline and move to the next eligible client.";
     await refresh();
   } catch (error) {
     formFeedback.textContent = error.message;

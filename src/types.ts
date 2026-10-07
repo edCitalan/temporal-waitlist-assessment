@@ -23,6 +23,8 @@ export type OpeningInput = {
   startsAt: string;
   displayTime: string;
   durationMinutes: number;
+  /** Per-client reply window selected by staff; older openings default to 15. */
+  responseMinutes?: number;
   /** Staff's last practical response time; defaults to appointment start. */
   offerUntil?: string;
   timeZone?: string;

@@ -85,6 +85,27 @@ test("matching respects local day/hour, service, stylist, consent, and oldest re
       opening({ localDay: 6 }), opening({ localDay: 6, stylist: "Rosa" })]);
 });
 
+test("staff-selected reply windows set each deadline and advance after timeout", async () => {
+  for (const minutes of [5, 30]) {
+    await scenario(`custom-window-${minutes}`, async (h, env) => {
+      const before = await h.query(getSalonSnapshot);
+      assert.equal(before.openings[0].responseMinutes, minutes);
+      const first = before.offers[0];
+      const remaining = Date.parse(first.deadlineAt) - await env.currentTimeMs();
+      assert.ok(remaining <= minutes * 60000 && remaining > (minutes - 1) * 60000);
+      assert.match(first.message, new RegExp(`within ${minutes} minutes`));
+      assert.match(first.message, /SIMULATED TEXT.*YES.*NO/);
+      await env.sleep(`${minutes - 1} minutes`);
+      assert.equal((await h.query(getSalonSnapshot)).offers[0].status, "waiting");
+      await env.sleep("1 minute");
+      const after = await h.query(getSalonSnapshot);
+      assert.equal(after.offers[0].status, "expired");
+      assert.equal(after.offers[1].clientName, "Jordan Lee");
+      assert.ok(Date.parse(after.offers[1].deadlineAt) >= Date.parse(first.deadlineAt) + minutes * 60000);
+    }, [opening({ responseMinutes: minutes })]);
+  }
+});
+
 test("earliest appointment wins priority; equal times use creation order", async () => {
   const later = opening();
   const earlier = opening({ startsAt: new Date(Date.parse(later.startsAt) - 3600000).toISOString() });
@@ -176,6 +197,11 @@ test("API normalization validates inputs and calculates Pacific availability acr
   assert.equal(normalized.localHour, 19);
   assert.match(normalized.displayTime, /Fri/);
   assert.notEqual(normalized.displayTime, "untrusted");
+  assert.equal(normalized.responseMinutes, 15);
+  assert.equal(normalizeOpening({ ...base, responseMinutes: 7 }, 0).responseMinutes, 7);
+  for (const responseMinutes of [0, -1, 1.5, 1441, "15", Number.NaN, Number.POSITIVE_INFINITY]) {
+    assert.throws(() => normalizeOpening({ ...base, responseMinutes }, 0), /reply window/);
+  }
   for (const invalid of [null, { ...base, stylist: "Any stylist" }, { ...base, startsAt: "bad" }, { ...base, durationMinutes: -1 }, { ...base, timeZone: "invalid" }, { ...base, offerUntil: "2031-01-01T00:00:00Z" }]) {
     assert.throws(() => normalizeOpening(invalid, 0));
   }

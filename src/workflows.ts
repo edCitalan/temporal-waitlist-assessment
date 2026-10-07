@@ -2,7 +2,6 @@ import { condition, defineQuery, defineSignal, defineUpdate, patched, setHandler
 import { legacySalonWorkflow, sampleWaitlist } from "./legacy-workflow";
 import type { ClientReply, Opening, OpeningInput, Offer, ReplyResult, SalonSnapshot, StaffCancellation, WaitlistEntry } from "./types";
 
-const OFFER_WINDOW_MS = 15 * 60 * 1000;
 export const salonTaskQueue = "assessment-starter";
 export const createOpening = defineSignal<[OpeningInput]>("createOpening");
 export const startOffers = defineSignal("startOffers");
@@ -75,12 +74,12 @@ export async function juniperSalonWorkflow(initial?: SalonSnapshot): Promise<voi
         touch();
         continue;
       }
-      const deadlineAt = new Date(Math.min(Date.now() + OFFER_WINDOW_MS, cutoff(opening))).toISOString();
+      const deadlineAt = new Date(Math.min(Date.now() + (opening.responseMinutes ?? 15) * 60000, cutoff(opening))).toISOString();
       const offer: Offer = {
         id: `${opening.id}-offer-${offers.length + 1}`, openingId: opening.id,
         clientId: candidate.id, clientName: candidate.name, service: opening.service,
         stylist: opening.stylist, startsAt: opening.startsAt, deadlineAt, status: "waiting",
-        message: simulated(`Juniper Salon: ${opening.service} with ${opening.stylist} is available on ${opening.displayTime}. Accept or decline within ${Math.ceil((Date.parse(deadlineAt) - Date.now()) / 60000)} minutes. The exact reply deadline is shown below.`),
+        message: simulated(`Juniper Salon: ${opening.service} with ${opening.stylist} is available on ${opening.displayTime}. Reply YES to accept this exact appointment or NO to decline within ${Math.ceil((Date.parse(deadlineAt) - Date.now()) / 60000)} minutes. The exact reply deadline is shown below.`),
       };
       offers.push(offer);
       opening.currentOfferId = offer.id;
