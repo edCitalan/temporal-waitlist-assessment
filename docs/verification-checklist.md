@@ -29,7 +29,7 @@ The missing configurable reply window is implemented. Type checking passed, all 
 - [x] Passing tests, including staff access, the twelve rules, client-link isolation, restart and replay.
 - [x] Staff and client desktop/mobile screenshots visually inspected; no clipping or horizontal overflow observed.
 - [x] Update and visually review all four PDF slides with the client experience, configurable reply window and current test counts.
-- [ ] Push this revision to the public repository.
+- [x] Push this revision to the public repository (`eec188c`, October 7, 2026).
 
 No SMS, Square, Google Sheets or PostHog connection is implemented. The front desk performs the real calendar update manually. Authenticated staff see the offer list; clients see only the individual offer authorized by their personal link. These are assistant-run checks, not a claim that Lena or Edward performed a final review.
 
@@ -58,7 +58,7 @@ The offer flow, staff access and separate client offer page are implemented and 
 - [x] Staff cancellation updates the client page and removes its response controls. Expiry, acceptance, follow-up, closure and competing-holder views are covered in unit tests.
 - [x] `npm run typecheck` passes; all 26 automated tests and 14 browser/API check groups pass.
 - [x] Refresh the presentation and instructions and visually inspect the client layouts.
-- [ ] Push the client-page and configurable-response revision.
+- [x] Push the client-page and configurable-response revision (`eec188c`, October 7, 2026).
 
 Browser verification uses separate staff and client contexts. The client has no staff cookie and cannot access `/api/salon`. The client replies through its own page; tests observe the result on the staff dashboard. Link signatures bind to one workflow run and offer. Client views exclude mobile numbers, other recipients, waitlist data and staff notes. No real messages were sent.
 
